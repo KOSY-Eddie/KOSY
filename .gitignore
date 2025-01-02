@@ -1,0 +1,6 @@
+*.log
+*.txt
+*.klog
+scratch.ks
+.DS_Store
+.vscode/
