@@ -7,30 +7,9 @@ function FlightApp {
     
     self:setClassName("FLIGHT").
     
-    local activeApp is null.
     set self:isControllable to true.
     local menuItems is list("Orbit", "Atmosphere", "Launch to Orbit").
-    local phaseManager is PhaseManager():new.
-    local takeoffPhase is TakeoffPhase(self):new.
-    
-    // Initialize phases
-    phaseManager:registerPhase("MENU",
-        { return false. },  // Menu never auto-completes
-        { self:setDrawCallback(drawMenu@). },  // onEnter
-        { }  // onExit
-    ).
-    
-    phaseManager:registerPhase("TAKEOFF",
-        { return takeoffPhase:isComplete. },
-        { // onEnter
-            self:setDrawCallback(drawFlight@).
-            takeoffPhase:start(
-                { phaseManager:setPhase("MENU"). },  // onComplete
-                drawFlight@  // onDraw
-            ).
-        },
-        { }  // onExit
-    ).
+    local currentLaunchPhase is "IDLE".
     
     self:setDrawCallback(drawMenu@).
 
@@ -60,33 +39,32 @@ function FlightApp {
             at (self:drawableArea:firstCol, self:drawableArea:firstLine + 4).
     }.
     
-    self:public("launchTakeoff", {
-        phaseManager:setPhase("TAKEOFF").
-    }).
+    local function launchTakeoff{
+        set currentLaunchPhase to "TAKEOFF".
+        local takeoff is CPTakeoff(self:drawableArea):new.
+        takeoff:activate().
+        takeoff:execute().
+    }
     
     self:protected("handleInput", {
         parameter input.
         local needsRedraw is false.
 
-        if phaseManager:getCurrentPhase() = "MENU" {
-            if input = "UP" {
-                if self:currentSelection > 0 {
-                    set self:currentSelection to self:currentSelection - 1.
-                    set needsRedraw to true.
-                }
-            } else if input = "DOWN" {
-                if self:currentSelection < menuItems:length - 1 {
-                    set self:currentSelection to self:currentSelection + 1.
-                    set needsRedraw to true.
-                }
-            } else if input = "CONFIRM" {
-                if self:currentSelection = 2 {
-                    launchTakeoff().
-                }
+        if input = "UP" {
+            if self:currentSelection > 0 {
+                set self:currentSelection to self:currentSelection - 1.
+                set needsRedraw to true.
             }
-        }
-        
-        if input = "LEFT" {
+        } else if input = "DOWN" {
+            if self:currentSelection < menuItems:length - 1 {
+                set self:currentSelection to self:currentSelection + 1.
+                set needsRedraw to true.
+            }
+        } else if input = "CONFIRM" {
+            if self:currentSelection = 2 {
+                launchTakeoff().
+            }
+        }else if input = "LEFT" {
             self:deactivate().
         }
         

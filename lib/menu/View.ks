@@ -8,7 +8,7 @@ function view {
     
     self:protected("drawableArea", drawableAreaIn).
     self:protected("currentSelection", 0).
-    self:protected("isControllable", false).
+    self:public("isControllable", false).
 
     local drawCallback is {}.
     
@@ -32,6 +32,16 @@ function view {
         from { local i is self:drawableArea:firstLine. } until i = self:drawableArea:lastLine step { set i to i + 1. } do {
             print "":padleft(width) at (self:drawableArea:firstCol, i).
         }.
+    }).
+
+    self:protected("fitText", {
+    parameter text, width is self:drawableArea:lastCol - self:drawableArea:firstCol.
+    
+        if text:length > width {
+            // Leave room for ellipsis
+            return text:substring(0, width - 3) + "...".
+        }
+        return text:padright(width).
     }).
 
     // Override this method for interactivity
@@ -77,19 +87,12 @@ function view {
         self:draw().
     }).
 
-    //draws the view on the top of the stack
-    self:protected("drawNext",{
-        local topView is views:peek().
-        if(topView:isControllable)
-            inputHandler:registerCallback(topView:handleInput).
-        //topView:clearArea().
-        topView:draw().
+    self:public("deactivate", {
+        views:pop(). //discard current view
+        local nextView is views:pop().
+        nextView:activate().
     }).
 
-    self:public("deactivate", {
-        views:pop().
-        self:drawNext().
-    }).
     
     return defineObject(self).
 }.

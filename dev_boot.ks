@@ -1,7 +1,3 @@
-// boot.ks candidate
-switch to 0.
-cd("/remote/KOSY/").
-
 clearscreen.
 
 print "KOSY Boot Sequence Starting...".

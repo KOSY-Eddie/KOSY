@@ -43,6 +43,7 @@ function Display {
     }).
     
     local main is MainMenu(self:launchApp@):new. //set callback for app launching
+    main:activate().
     
     return defineObject(self).
 }
