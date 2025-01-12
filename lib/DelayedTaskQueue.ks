@@ -1,16 +1,19 @@
-runOncePath("/KOSY/lib/QuickSort.ks").
-//runOncePath("/KOSY/lib/TaskifiedObject.ks").
+runOncePath("/KOSY/lib/MinHeap.ks").
 
-local function TaskWrapper {
-    parameter taskToWrap, executionTime.
+function TaskWrapper {
+    parameter taskToWrap, executionTime, idx.
     local self is Object():extend.
     
     self:public("task", taskToWrap).
-    self:public("executeAt", executionTime).
+    self:public("value", executionTime).
+    self:public("insertionIdx",idx).
     
     self:public("compare", {
         parameter other.
-        return self:executeAt - other:executeAt:get().
+        if self:value = other:value:get()
+            return self:insertionIdx - other:insertionIdx:get().
+            
+        return self:value - other:value:get().
     }).
     
     return defineObject(self).
@@ -20,79 +23,51 @@ function DelayedTaskQueue {
     local self is Object():extend.
     self:setClassName("DelayedTaskQueue").
     
-    local items is list().
-    local sorter is QuickSort():new.
-    
-    self:public("push", {
-        parameter wrapper.
-        items:add(wrapper).
-        sorter:sort(items).
-    }).
-    
-    self:public("pop", {
-        if self:isEmpty() {
-            return null.
-        }
-        local returnItem is items[0].
-        items:remove(0).
-        return returnItem.
-    }).
+    local heap is MinHeap():new.
+    local nextReadyTime is 0.
+    local insertionCounter is 0.
     
     self:public("addTask", {
-        parameter taskIn, delay.
-        local wrapper is TaskWrapper(taskIn, time:seconds + delay):new.
-        self:push(wrapper).
-    }).
-
-    self:public("count", {
-        return items:length.
-    }).
-    
-    self:public("isEmpty", {
-        return items:length = 0.
-    }).
-    
-    self:public("peek", {
-        if self:isEmpty() {
-            return null.
+        parameter task, delay.
+        set insertionCounter to insertionCounter + 1.
+        local wrappedTask is TaskWrapper(task, time:seconds + delay, insertionCounter):new.
+        
+        // Only set nextReadyTime if queue was empty
+        if nextReadyTime = 0 {
+            set nextReadyTime to wrappedTask:value:get().
         }
-        return items[0].
+        heap:insert(wrappedTask).
     }).
     
     self:public("getReadyTasks", {
         local readyTasks is list().
         local currentTime is time:seconds.
-        local shouldContinue is true.
         
-        until self:isEmpty() or not shouldContinue {
-            local nextTask is self:peek().
-            if nextTask:executeAt:get() > currentTime {
-                set shouldContinue to false.
-            } else {
-                readyTasks:add(self:pop():task:get()).
+        until heap:isEmpty() {
+            local nextTask is heap:peek().
+            if nextTask:value:get() > currentTime {
+                set nextReadyTime to nextTask:value:get().
+                break.
             }
+            
+            readyTasks:add(nextTask:task:get()).
+            heap:extract_min().
+        }
+        
+        if heap:isEmpty() {
+            set nextReadyTime to 0.
         }
         
         return readyTasks.
     }).
     
     self:public("count", {
-        return items:length.
+        return heap:size().
+    }).
+    
+    self:public("isReady", {
+        return nextReadyTime > 0 and time:seconds >= nextReadyTime.
     }).
     
     return defineObject(self).
 }
-
-
-
-// // Test code
-// function TestTask {
-//     parameter name.
-//     local self is Object():extend.
-    
-//     self:public("execute", {
-//         print "Executing " + name + " at " + time:seconds.
-//     }).
-    
-//     return defineObject(self).
-// }

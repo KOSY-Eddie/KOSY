@@ -5,6 +5,8 @@ global views is ViewStack():new.
 function view {
     parameter drawableAreaIn.
     local self is TaskifiedObject():extend.
+
+    self:protected("viewItems",list()).
     
     self:protected("drawableArea", drawableAreaIn).
     self:protected("currentSelection", 0).

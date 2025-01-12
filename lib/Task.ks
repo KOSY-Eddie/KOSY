@@ -57,40 +57,52 @@ function Task {
     self:setClassName("Task").
 
     local taskParams is taskParamsIn.
-    
+    self:public("taskId", scheduler:newTaskID()).
     local totalRuntime is 0.
     self:public("value", 0).
     
+    // Cache these at creation
+    local hasValidCondition is taskParams:condition:isType("UserDelegate").
+    local hasValidWork is taskParams:work:isType("UserDelegate").
+    local hasValidIncrement is taskParams:hasKey("increment") and taskParams:increment:isType("UserDelegate").
+    local hasDelay is taskParams:hasKey("delay").
+    local delayValue is choose taskParams:delay if hasDelay else 0.
+    local useRuntime is not hasDelay or delayValue >= 0.
+    
     self:public("execute", {
         parameter scheduler.
-        //condition
-        //work
-        //increment
-        //condition
-
         local startTime is time:seconds.
-        if not taskParams:condition:isType("UserDelegate") or taskParams:condition(){
-            if taskParams:work:isType("UserDelegate")
-                taskParams:work().
+        
+        // Single condition check for work
+        if (not hasValidCondition or taskParams:condition()) and hasValidWork {
+            taskParams:work().
         }
-        set totalRuntime to totalRuntime + (time:seconds - startTime).
-        set self:value to totalRuntime. //for the heap
         
-        if taskParams:increment:isType("UserDelegate")
+        // Update value
+        if useRuntime {
+            set totalRuntime to totalRuntime + (time:seconds - startTime).
+            set self:value to totalRuntime.
+        }
+        
+        // Handle increment if it exists
+        if hasValidIncrement {
             taskParams:increment().
+        }
         
-        if taskParams:condition:isType("UserDelegate") and taskParams:condition(){
-            
-            // Schedule next iteration
-            if taskParams:hasKey("delay"){
-                scheduler:addDelayedTask(self:new, taskParams:delay).}
-            else
+        // Simplified rescheduling
+        if hasValidCondition and taskParams:condition() {
+            if hasDelay and delayValue >= 0 {
+                scheduler:addDelayedTask(self:new, delayValue).
+            } else {
                 scheduler:addTask(self:new).
+            }
         }
     }).
-    //comparison function for heap operations
+    
     self:public("compare", {
         parameter other.
+        if self:value = other:value:get()
+           return self:taskId - other:taskId:get().
         return self:value - other:value:get().
     }).
     

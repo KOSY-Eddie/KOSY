@@ -1,6 +1,6 @@
+runOncePath("/KOSY/lib/DelayedTaskQueue.ks").
 runOncePath("/KOSY/lib/MinHeap.ks").
 runOncePath("/KOSY/lib/Task.ks").
-runOncePath("/KOSY/lib/DelayedTaskQueue.ks").
 
 function TaskScheduler {
     local self is Object():extend.
@@ -10,7 +10,18 @@ function TaskScheduler {
     local task_count is 0.
     local running is true.
     local cpuUsage is 0.
+    local nextTaskId is 0.
     
+    // CPU usage smoothing
+    local cpu_window is list().
+    local window_size is 100.
+    
+    self:public("newTaskID", {
+        local taskId is nextTaskId.
+        set nextTaskId to nextTaskId + 1.
+        return taskId.
+    }).
+        
     self:public("addTask", {
         parameter newTask.
         heap:insert(newTask).
@@ -22,36 +33,53 @@ function TaskScheduler {
         _delayedTaskQueue:addTask(taskIn, delay).
     }).
 
-
     self:protected("executeNext", {
-            local startTime is time:seconds.
-            
-            local currentTask is heap:extract_min().
-            set task_count to task_count - 1.
- 
-            currentTask:execute(self).
-            
-            set cycleTime to (time:seconds - startTime).
-            set cpuUsage to min(100,round(cycleTime / 0.02,2)).
+        local startTime is time:seconds.
         
+        local currentTask is heap:extract_min().
+        set task_count to task_count - 1.
+        currentTask:execute(self).
+        
+        local cycleTime is (time:seconds - startTime).
+        local current_usage is min(100, round((cycleTime * 50) * 100, 2)).
+        
+        // Moving average
+        cpu_window:add(current_usage).
+        if cpu_window:length > window_size {
+            cpu_window:remove(0).
+        }
+        
+        // Average over window
+        local total is 0.
+        for usage in cpu_window {
+            set total to total + usage.
+        }
+        set cpuUsage to total / cpu_window:length.
     }).
 
     self:public("step", {
         if running {
-            
-            // Check for delayed tasks that are ready
-            local readyTasks is _delayedTaskQueue:getReadyTasks().
-            if readyTasks:isType("list") {
-                for t in readyTasks {
-                    self:addTask(t).
+            if _delayedTaskQueue:isReady() {
+                local readyTasks is _delayedTaskQueue:getReadyTasks().
+                if readyTasks:isType("list") {
+                    for t in readyTasks {
+                        self:addTask(t).
+                    }
                 }
             }
             
-            // Normal task execution
             if task_count > 0 {
                 self:executeNext().
             } else {
-                set cpuUsage to 0.
+                cpu_window:add(0).
+                if cpu_window:length > window_size {
+                    cpu_window:remove(0).
+                }
+                local total is 0.
+                for usage in cpu_window {
+                    set total to total + usage.
+                }
+                set cpuUsage to total / cpu_window:length.
             }
         }
     }).
@@ -64,12 +92,13 @@ function TaskScheduler {
         set running to false.
     }).
 
-    self:public("scheduledTasks",{return task_count.}).
+    self:public("scheduledTasks", {
+        return task_count.
+    }).
 
     self:public("pendingTasks", {
         return task_count + _delayedTaskQueue:count().
     }).
-
     
     return defineObject(self).
 }

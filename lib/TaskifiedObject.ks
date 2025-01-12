@@ -84,8 +84,9 @@
 
 
 
-runOncePath("/KOSY/lib/KObject.ks").
-runOncePath("/KOSY/lib/Task.ks").
+runOncePath("/KOSY/lib/KObject").
+runOncePath("/KOSY/lib/Task").
+runOncePath("/KOSY/lib/Utils").
 
 function TaskifiedObject {
     local self is Object():extend.
@@ -102,43 +103,44 @@ function TaskifiedObject {
         if increment:istype("userDelegate")
             set taskParams:increment to increment@.
 
-        if(delay > 0)
-            set taskParams["delay"] to delay.
+        set taskParams["delay"] to delay.
 
-            scheduler:addTask(Task(taskParams):new).
-        
+        scheduler:addTask(Task(taskParams):new).
     }.
     
-    //while loops stop when condition is false
     set self:while to {
-        parameter condition, func, delay is 0. //delay is optional parameter that delays the task, used in place of wait
+        parameter condition, func, delay is 0.
         self:for(condition,0, func, delay).
     }.
     
+    set self:publicS to parent_public.
 
-    // Override public to wrap methods in tasks
     set self:public to {
         parameter name, maybeFunc, taskParams is emptyTaskLex:copy().
         
         if maybeFunc:istype("delegate") {
             local taskifiedMethod is {
-                parameter p1 is null, p2 is null, p3 is null, p4 is null, p5 is null. //5 params is all you need :^)
-                if not isNull(p5) {
-                    set taskParams:work to maybeFunc:bind(p1,p2,p3,p4,p5).
-                } else if not isNull(p4) {
-                    set taskParams:work to maybeFunc:bind(p1,p2,p3,p4).
-                } else if not isNull(p3) {
-                    set taskParams:work to maybeFunc:bind(p1,p2,p3).
-                } else if not isNull(p2) {
-                    set taskParams:work to maybeFunc:bind(p1,p2).
-                } else if not isNull(p1) {
-                    set taskParams:work to maybeFunc:bind(p1).
-                } else {
-                    set taskParams:work to maybeFunc.
+                // Collect parameters directly like in DebugObject
+                local params is list().
+                local isDone is false.
+                
+                until isDone {
+                    parameter arg is NULL.
+                    if isNull(arg) {
+                        set isDone to true.
+                    } else {
+                        params:add(arg).
+                    }
                 }
 
-                local taskifiedFunc is Task(taskParams):new.
+                // Bind parameters
+                local boundFunc is maybeFunc.
+                for param in params {
+                    set boundFunc to boundFunc:bind(param).
+                }
                 
+                set taskParams:work to boundFunc.
+                local taskifiedFunc is Task(taskParams):new.
                 scheduler:addTask(taskifiedFunc).
             }.
             
@@ -147,11 +149,6 @@ function TaskifiedObject {
             parent_public(name, maybeFunc).
         }
     }.
-
-
         
     return defineObject(self).
 }
-
-
-

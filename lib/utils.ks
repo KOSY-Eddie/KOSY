@@ -97,3 +97,26 @@ FUNCTION get_runway_heading {
     
     RETURN get_compass_heading(desired_vec).
 }
+
+function wrapWithParams {
+    parameter funcToWrap.
+    
+    local params is list().
+    local isDone is false.
+    
+    until isDone {
+        parameter arg is NULL.
+        if arg:isType("Lexicon") and arg = NULL {
+            set isDone to true.
+        } else {
+            params:add(arg).
+        }
+    }
+    
+    local boundFunc is funcToWrap.
+    for param in params {
+        set boundFunc to boundFunc:bind(param).
+    }
+    
+    return boundFunc.
+}

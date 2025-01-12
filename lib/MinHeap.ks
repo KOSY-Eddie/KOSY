@@ -1,85 +1,117 @@
 runOncePath("/KOSY/lib/kobject.ks").
 
 function MinHeap {
-    local self is Object():extend.
+    local self is BaseObject():extend.
     self:setClassName("MinHeap").
     
-    local heap_list is list(0).  // Using 0 as sentinel
+    local heap_list is list().
     local count is 0.
     
-    // Helper functions
-    local function bubble_up {
+    // Helper functions for 4-ary heap
+    local function get_children_indices {
         parameter index.
-        
-        until index <= 1 or heap_list[index]:value:get() >= heap_list[floor(index/2)]:value:get() {
-            // Swap elements
-            local temp is heap_list[index].
-            set heap_list[index] to heap_list[floor(index/2)].
-            set heap_list[floor(index/2)] to temp.
-            set index to floor(index/2).
-        }
-    }
-    
-    local function bubble_down {
-        parameter index.
-        
-        until 2*index > count {
-            local min_child is get_min_child(index).
-            if heap_list[index]:value:get() > heap_list[min_child]:value:get() {
-                // Swap elements
-                local temp is heap_list[index].
-                set heap_list[index] to heap_list[min_child].
-                set heap_list[min_child] to temp.
-                set index to min_child.
-            } else {
-                break.
-            }
-        }
+        local firstChild is index * 4 + 1.
+        return list(
+            firstChild,
+            firstChild + 1,
+            firstChild + 2,
+            firstChild + 3
+        ).
     }
     
     local function get_min_child {
         parameter index.
+        local children is get_children_indices(index).
+        local firstChild is children[0].
         
-        if 2*index + 1 > count {
-            return 2*index.
+        if firstChild >= count { return index. }
+        
+        local minIdx is firstChild.
+        local minElement is heap_list[firstChild].
+        
+        from { local i is 1. }
+        until i >= 4 or (firstChild + i) >= count
+        step { set i to i + 1. } do {
+            local childIdx is firstChild + i.
+            local child is heap_list[childIdx].
+            if child:compare(minElement) < 0 {
+                set minIdx to childIdx.
+                set minElement to child.
+            }
         }
         
-        if heap_list[2*index]:value:get() < heap_list[2*index + 1]:value:get() {
-            return 2*index.
-        }
-        return 2*index + 1.
+        return minIdx.
     }
     
-    // Public methods
+    local function bubble_down {
+        parameter index.
+        local item is heap_list[index].
+        
+        until index * 4 + 1 >= count {
+            local minChildIdx is get_min_child(index).
+            if minChildIdx = index or item:compare(heap_list[minChildIdx]) <= 0 {
+                break.
+            }
+            
+            set heap_list[index] to heap_list[minChildIdx].
+            set index to minChildIdx.
+        }
+        set heap_list[index] to item.
+    }
+    
+    // Public interface
     self:public("insert", {
         parameter element.
         heap_list:add(element).
         set count to count + 1.
-        bubble_up(count).
+        
+        // Optimized bubble up
+        local currentIdx is count - 1.
+        local item is element.
+        
+        until currentIdx <= 0 {
+            local parentIdx is floor((currentIdx - 1) / 4).
+            if item:compare(heap_list[parentIdx]) >= 0 {
+                break.
+            }
+            set heap_list[currentIdx] to heap_list[parentIdx].
+            set currentIdx to parentIdx.
+        }
+        set heap_list[currentIdx] to item.
     }).
     
     self:public("extract_min", {
         if count = 0 {
-            return 0.
+            return null.
         }
         
-        local min_element is heap_list[1].
-        set heap_list[1] to heap_list[count].
-        heap_list:remove(count).
+        local minElement is heap_list[0].
+        
         set count to count - 1.
-        
         if count > 0 {
-            bubble_down(1).
+            local lastElement is heap_list[count].
+            heap_list:remove(count).
+            set heap_list[0] to lastElement.
+            bubble_down(0).
+        } else {
+            heap_list:clear().
         }
         
-        return min_element.
+        return minElement.
+    }).
+
+    self:public("peek", {
+        if count = 0 {
+            return null.
+        }
+        return heap_list[0].
     }).
     
     self:public("size", {
         return count.
     }).
 
-    self:public("isEmpty",{
+    self:public("isEmpty", {
         return count = 0.
     }).
     
