@@ -102,3 +102,5 @@ function TaskScheduler {
     
     return defineObject(self).
 }
+
+global scheduler is TaskScheduler():new.

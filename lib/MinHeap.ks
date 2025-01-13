@@ -1,7 +1,7 @@
 runOncePath("/KOSY/lib/kobject.ks").
 
 function MinHeap {
-    local self is BaseObject():extend.
+    local self is Object():extend.
     self:setClassName("MinHeap").
     
     local heap_list is list().

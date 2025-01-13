@@ -1,12 +1,15 @@
 global systemvars is lex("DEBUG", true).
 
-runOncePath("/KOSY/lib/TaskScheduler").
 runOncePath("/KOSY/lib/FileWriter").
+runOncePath("/KOSY/lib/TaskScheduler").
 runOncePath("/KOSY/lib/KOSYView/DisplayBuffer").
 
 clearscreen.
-global scheduler is TaskScheduler():new.
+
+global fWriter is FileWriter():new.
 fWriter:start().
+
+//fWriter:start().
 set CONFIG:IPU to 2000.  // Fixed IPU
 
 // Create display buffer
@@ -35,9 +38,9 @@ function BouncingText {
     local lastPhysicsUpdate is time:seconds.
     local lastDisplayUpdate is time:seconds.
     local PHYSICS_RATE is 0.05.  // 50hz physics
-    local DISPLAY_RATE is 0.1.  // 20hz display
+    local DISPLAY_RATE is 0.05.  // 10hz display
     
-    local function updatePhysics {
+    self:publicS("updatePhysics", {
         local currentTime is time:seconds.
         local dt is currentTime - lastPhysicsUpdate.
 
@@ -65,30 +68,39 @@ function BouncingText {
             
             set lastPhysicsUpdate to currentTime.
         //}
-    }.
+        
+    }).
     
-    local function updateDisplay {
+    self:publicS("updateDisplay", {
         //local currentTime is time:seconds.
         //if currentTime - lastDisplayUpdate >= DISPLAY_RATE {
             screenBuffer:clearBuffer().
             screenBuffer:place(round(scheduler:getCPUUsage()):toString(), round(pos:x), round(pos:y)).
-            //screenBuffer:render().
+            screenBuffer:render().
             //set lastDisplayUpdate to currentTime.
         //}
-    }.
+    }).
+
+    self:public("greedyPhysics",{
+        parameter greedyCount.
+        local isDone is false.
+       
+        until greedyCount <=0 {
+            self:updatePhysics().
+            self:updateDisplay().
+            //wait DISPLAY_RATE.
+            set greedyCount to greedyCount - 1.
+        }
+    }).
+
     
     //Create separate tasks for physics and display
     scheduler:addTask(Task(lex(
         "condition", { return true. },
-        "work", { updatePhysics(). },
-        "delay", PHYSICS_RATE
+        "work", { scheduler:addTask(Task(lex("work",{self:greedyPhysics(100).})):new). },
+        "delay", 1
     )):new).
     
-    scheduler:addTask(Task(lex(
-        "condition", { return true. },
-        "work", { updateDisplay(). },
-        "delay", DISPLAY_RATE
-    )):new).
 
     // local function auto {
     //     self:while({return true.}, {

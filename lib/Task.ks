@@ -62,7 +62,7 @@ function Task {
     self:public("value", 0).
     
     // Cache these at creation
-    local hasValidCondition is taskParams:condition:isType("UserDelegate").
+    local hasValidCondition is taskParams:hasKey("condition") and taskParams:condition:isType("UserDelegate").
     local hasValidWork is taskParams:work:isType("UserDelegate").
     local hasValidIncrement is taskParams:hasKey("increment") and taskParams:increment:isType("UserDelegate").
     local hasDelay is taskParams:hasKey("delay").

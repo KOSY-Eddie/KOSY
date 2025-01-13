@@ -28,9 +28,9 @@ function DelayedTaskQueue {
     local insertionCounter is 0.
     
     self:public("addTask", {
-        parameter task, delay.
+        parameter taskIn, delay.
         set insertionCounter to insertionCounter + 1.
-        local wrappedTask is TaskWrapper(task, time:seconds + delay, insertionCounter):new.
+        local wrappedTask is TaskWrapper(taskIn, time:seconds + delay, insertionCounter):new.
         
         // Only set nextReadyTime if queue was empty
         if nextReadyTime = 0 {

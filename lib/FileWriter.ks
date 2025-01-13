@@ -1,4 +1,5 @@
-
+runoncepath("/KOSY/lib/kobject").
+runoncepath("/KOSY/lib/task").
 function FileWriter {
     local self is BaseObject():extend.
     self:setClassName("FileWriter").
@@ -12,26 +13,26 @@ function FileWriter {
             "work", {
                 if not fwQueue:empty {
                     local writeData is fwQueue:pop().
+                    if writeData:overwrite and exists(writeData:filePath) {
+                        deletepath(writeData:filePath).
+                    }
                     log writeData:message to writeData:filePath.
                 }
             },
-            "increment", {}
+            "delay", .5
         ).
         set watchdog to Task(taskParams):new.
         scheduler:addTask(watchdog).
     }).
 
     self:public("queueWrite", {
-        parameter filePath, message.
-        //print "Queuing write to: " + filePath.  // Debug
+        parameter filePath, message, overwrite is false.
         fwQueue:push(lex(
             "filePath", filePath,
-            "message", message
+            "message", message,
+            "overwrite", overwrite
         )).
     }).
-    
+
     return defineObject(self).
 }
-
-
-global fWriter is FileWriter():new.
