@@ -15,6 +15,7 @@ function ContainerView {
         set self:dirty to true.
     }).
     
+    self:public("getChildren",{return self:children:copy().}).
     // Add a child view
     self:public("addChild", {
         parameter child.
