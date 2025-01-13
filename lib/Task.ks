@@ -1,52 +1,56 @@
-// Task Library
+// KOSY Task System
 // Author: Eddie Kerman
-// Version: 1.0
+// Version: 1.1
 //
-// A task representation that mimics C-style for loop structure:
-// for (initialState; conditionFunc; incrementFunc) {
-//     workFunc;
-// }
+// Represents a schedulable unit of work with optional repetition and delay.
+// Tasks can be one-shot or recurring, with priority based on runtime.
 //
-// Features:
-// - State-based execution
-// - Conditional looping
-// - Runtime tracking for priority scheduling
-// - Automatic rescheduling
+// Task Creation:
+// Tasks are created with a parameter lexicon containing:
+// - work: Delegate       // Required: The work to perform
+// - condition: Delegate  // Optional: Return true to continue task
+// - increment: Delegate  // Optional: Called after work
+// - delay: Scalar       // Optional: Time between executions
+//                       // Negative delay gives constant priority (experimental!)
 //
-// Parameters:
-// initialState: Lexicon
-//     Initial state variables for the task
+// Usage Examples:
+// 1. One-shot task:
+//    local simpleTask is Task(lex(
+//        "work", { print "Hello!". }
+//    )):new.
 //
-// conditionFunc: Delegate
-//     Function that determines if task should continue
-//     parameter s: The current state
-//     returns: Boolean indicating whether to continue
+// 2. Recurring task with delay:
+//    local timedTask is Task(lex(
+//        "condition", { return true. },
+//        "work", { print "Tick". },
+//        "delay", 1  // Every second
+//    )):new.
 //
-// incrementFunc: Delegate
-//     Function called after work to update state
-//     parameter s: The current state
+// 3. Cooperative loop task:
+//    // Instead of hogging CPU with a direct loop,
+//    // spread work across task schedule:
+//    local loopTask is Task(lex(
+//        "condition", { return count < 1000. },
+//        "work", { 
+//            // Do some work
+//            set count to count + 1.
+//        }
+//    )):new.
 //
-// workFunc: Delegate
-//     The actual work to be performed
-//     parameter s: The current state
-//
-// Usage Example:
-// local countTask is Task(
-//     // Initial state
-//     lex("count", 0),
-//     // Condition
-//     { parameter s. return s:count < 5. },
-//     // Increment
-//     { parameter s. set s:count to s:count + 1. },
-//     // Work
-//     { parameter s. print "Count: " + s:count. }
-// ):new.
+// Priority System:
+// - Tasks track total runtime for priority
+// - Lower runtime gets higher priority
+// - Same-runtime tasks ordered by taskId
+// - Negative delay for constant priority (use with caution!)
 //
 // Notes:
-// - Tasks track their runtime for priority scheduling
-// - Tasks automatically reschedule if condition remains true
-// - All functions receive the current state as parameter
-// - State is preserved between iterations
+// - Tasks auto-reschedule if condition returns true
+// - Delayed tasks wait in DelayedTaskQueue
+//
+// Dependencies:
+// - KObject.ks
+// - TaskScheduler.ks
+
 
 runOncePath("/KOSY/lib/TaskScheduler.ks").
 

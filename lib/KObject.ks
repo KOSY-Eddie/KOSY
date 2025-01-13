@@ -1,37 +1,61 @@
 // KOSY Object System Base
 // Author: Eddie Kerman
-// Version: 1.0
+// Version: 1.1
 //
 // A base implementation for object-oriented programming in KOS.
 // Provides core functionality for creating objects with proper encapsulation.
+//
+// Core Features:
+// - Object creation and inheritance
+// - Public/Protected member management
+// - NULL object pattern for safe null checks
+// - Debug integration when systemVars:DEBUG is true
 //
 // Usage:
 // 1. Create a new class by extending Object:
 //    function MyClass {
 //        local self is Object():extend.
+//        self:setClassName("MyClass").
 //
-// 2. Define public methods and properties:
-//    self:public("myMethod", {
-//        parameter input.
-//        // Method body
+// 2. Define protected members (accessible only within class hierarchy):
+//    self:protected("_internalValue", 42).
+//    self:protected("_helper", {
+//        // Internal method
 //    }).
 //
-//    self:public("myProperty", someValue).
+// 3. Define public methods and properties:
+//    self:public("calculate", {
+//        parameter input.
+//        return input + self["_internalValue"].
+//    }).
 //
-// 3. Access properties in instantiated objects:
+//    self:public("value", 10).  // Creates accessor property
+//
+// 4. Create and use instances:
 //    local myObj is MyClass():new.
-//    myObj:myProperty:get().     // Get the value
-//    myObj:myProperty:set(10).   // Set the value
+//    myObj:value:set(20).           // Set property
+//    print myObj:value:get().       // Get property
+//    print myObj:calculate(10).     // Call method
+//
+// 5. Use NULL object pattern:
+//    if not isNull(someObject) {
+//        // Safe to use object
+//    }
 //
 // Notes:
-// - All public properties must be accessed using get() and set() after instantiation
-// - Protected members are only accessible within the class (including inherited calsses)
-// - Each object instance has a unique identifier (GUID)
-// - Objects can be compared for equality using equals()
+// - Public properties require get()/set() after instantiation
+// - Data members are directly accessible within class
+// - Each object has a unique numeric ID for comparison
+// - Legacy GUID generation available but not used by default
+// - Debug features active when systemVars:DEBUG is true
 //
 // Dependencies:
-// - None
+// - utils.ks
+// - DebugObject.ks
+
 runOncePath("/KOSY/lib/utils").
+runOncePath("/KOSY/lib/DebugObject").
+
 global NULL to lex().
 local objectCounter is 0.
 
@@ -130,116 +154,4 @@ function BaseObject{
 function defineObject{
     parameter obj.
     return lex("new", obj:new, "extend", obj).
-}
-
-local function DebugObject {
-    local self is BaseObject():extend.
-    self:setClassName("DebugObject").
-    
-    local parent_public is self:public.
-    local methodMetrics is lex().
-
-    function initMethodMetrics {
-        parameter methodName.
-        if not methodMetrics:haskey(methodName) {
-            set methodMetrics[methodName] to lex(
-                "total_calls", 0,
-                "total_time", 0,
-                "max_time", 0,
-                "min_time", 999999,
-                "last_call_time", 0
-            ).
-        }
-    }
-
-    function updateMetrics {
-        parameter methodName, duration.
-        local metrics is methodMetrics[methodName].
-        set metrics["total_calls"] to metrics["total_calls"] + 1.
-        set metrics["total_time"] to metrics["total_time"] + duration.
-        set metrics["last_call_time"] to duration.
-        if duration > metrics["max_time"] {
-            set metrics["max_time"] to duration.
-        }
-        if duration < metrics["min_time"] {
-            set metrics["min_time"] to duration.
-        }
-    }
-
-    function formatParam {
-        parameter param.
-        if param:isType("Lexicon") and param:hasKey("getClassName") {
-            return param:toStr().
-        }
-        return param.
-    }
-
-    function formatParams {
-        parameter paramList.
-        local formattedParams is list().
-        for param in paramList {
-            formattedParams:add(formatParam(param)).
-        }
-        return formattedParams.
-    }
-
-    set self:public to {
-        parameter name, maybeFunc.
-        
-        if maybeFunc:istype("delegate") {
-            initMethodMetrics(name).
-            
-            local debugWrappedMethod is {
-                local params is list().
-                local isDone is false.
-                
-                until isDone {
-                    parameter arg is NULL.
-                    if isNull(arg) {
-                        set isDone to true.
-                    } else {
-                        params:add(arg).
-                    }
-                }
-
-                local startTime is time:seconds.
-                local className is self:getClassName().
-                local objId is self:getObjID().
-                
-                local dirPath is "/KOSY/var/log/debug/" + className.
-                if not exists(dirPath) {
-                    createDir(dirPath).
-                }
-                
-                local logPath is dirPath + "/" + name + ".log".
-                local formattedParams is formatParams(params).
-                fWriter:queueWrite(logPath, "[" + startTime + "] ID:" + objId + " PARAMS:" + formattedParams).
-
-                local boundFunc is maybeFunc.
-                for param in params {
-                    set boundFunc to boundFunc:bind(param).
-                }
-                
-                local result is boundFunc().
-                
-                local endTime is time:seconds.
-                local duration is endTime - startTime.
-                updateMetrics(name, duration).
-                
-                fWriter:queueWrite(logPath, "END:" + endTime + " DURATION:" + duration + 
-                    " TOTAL_CALLS:" + methodMetrics[name]["total_calls"] + 
-                    " AVG_TIME:" + (methodMetrics[name]["total_time"] / methodMetrics[name]["total_calls"]) +
-                    " MAX_TIME:" + methodMetrics[name]["max_time"] + 
-                    " MIN_TIME:" + methodMetrics[name]["min_time"]).
-                
-                return result.
-            }.
-            
-            return parent_public(name, debugWrappedMethod).
-        } else {
-            return parent_public(name, maybeFunc).
-        }
-    }.
-    
-    return defineObject(self).
 }

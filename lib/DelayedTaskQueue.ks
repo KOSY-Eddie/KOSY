@@ -1,3 +1,46 @@
+// KOSY Delayed Task Queue
+// Author: Eddie Kerman
+// Version: 1.0
+//
+// A priority queue system for scheduling tasks with future execution times.
+// Used internally by the Task Scheduler to manage delayed task execution.
+//
+// Components:
+// 1. TaskWrapper:
+//    Attaches timing metadata to tasks:
+//    - Execution time: When the task should run
+//    - Insertion order: Used as a tiebreaker when multiple tasks
+//      share the same execution time, ensuring consistent ordering
+//    This wrapper allows the queue to sort tasks by time while
+//    maintaining predictable execution order for simultaneous tasks.
+//
+// 2. DelayedTaskQueue:
+//    Core queue implementation using a MinHeap for task management.
+//    Tracks the next scheduled execution time for optimal task checking.
+//    Provides methods for adding delayed tasks and retrieving ready ones.
+//
+// Internal Operation:
+// - Tasks are stored with their intended execution time
+// - MinHeap keeps tasks ordered by execution time
+// - When tasks share execution times, their original insertion order
+//   determines priority, providing consistent, predictable execution
+// - Queue tracks next ready time to avoid unnecessary checking
+//
+// Public Methods:
+// - addTask(task, delay): Schedules task for future execution
+// - getReadyTasks(): Retrieves all currently executable tasks
+// - count(): Returns queue size
+// - isReady(): Checks if any tasks are due for execution
+//
+// Notes:
+// - Primarily used by TaskScheduler
+// - Empty queue indicated by nextReadyTime = 0
+//
+// Dependencies:
+// - MinHeap.ks
+// - KObject.ks
+
+
 runOncePath("/KOSY/lib/MinHeap.ks").
 
 function TaskWrapper {

@@ -1,88 +1,76 @@
-// TaskifiedObject
+// KOSY Taskified Object System
 // Author: Eddie Kerman 
 // Version: 1.1
 //
-// A class wrapper that automatically converts methods into scheduled tasks.
-// Extends the KOSY Object System to provide seamless task creation and management.
-//
+// Extends the KOSY Object System to automatically convert methods into scheduled tasks.
+// Provides a framework for cooperative multitasking through task-based loops.
 //
 // Usage:
 // 1. Extend TaskifiedObject instead of Object:
 //    function MyClass {
 //        local self is TaskifiedObject():extend.
 //
-// 2. Define methods normally - they'll be automatically taskified:
+// 2. Methods automatically become scheduled tasks:
 //    self:public("myMethod", {
 //        parameter input.
 //        // Method body
 //    }).
 //
-// 3. Use for-loop style tasks:
+// 3. Create cooperative loops that play nice with scheduler:
 //    self:for(
-//        { parameter s. return s:i < 10. },    // Condition
-//        { parameter s. print s:i. },          // Work
+//        { parameter s. return s:i < 10. },    // Continue condition
+//        { parameter s. print s:i. },          // Work to perform
 //        { parameter s. set s:i to s:i + 1. }, // Increment (optional)
-//        0                                     // Delay between iterations in seconds (optional)
+//        0                                     // Delay between iterations (optional)
 //    ).
 //
-// 4. Use while-loop style tasks:
 //    self:while(
-//        { parameter s. return s:val < 5. },   // Condition
-//        { parameter s. print s:val. },        // Work
-//        0                                     // Delay in seconds (optional)
+//        { parameter s. return s:val < 5. },   // Continue condition
+//        { parameter s. print s:val. },        // Work to perform
+//        0                                     // Delay (optional)
 //    ).
 //
-// 5. Using Callbacks for Task Communication:
-//    Due to the asynchronous nature of tasks you must 
-//    use a function callback if you need a loop to return a value.
+// Task Communication:
+// Due to asynchronous execution, use callbacks for task communication:
 //
-//    GOOD Example:
-//    local function checkInputFunc {
-//        parameter callback.
-//        self:while(
-//            { parameter s. return true. },
-//            { parameter s.
-//                if someCondition {
-//                    callback(result).  // Proper way to communicate
-//                }
-//            }
-//        ).
-//    }.
+// RECOMMENDED:
+// local function processInput {
+//     parameter callback.
+//     self:while(
+//         { return true. },
+//         { 
+//             if haveInput {
+//                 callback(input).  // Safe communication
+//             }
+//         }
+//     ).
+// }.
 //
-//    This works too, but can be buggy because you dont know exactly when lastResut is set:
-//    local lastResult is 0.  
-//    local function checkInputFunc {
-//        self:while(
-//            { parameter s. return true. },
-//            { parameter s.
-//                if someCondition {
-//                    set lastResult to result. 
-//                }
-//            }
-//        ).
-//    }.
+// NOT RECOMMENDED:
+// local result is 0.  
+// self:while(
+//     { return true. },
+//     { 
+//         if haveInput {
+//             set result to input.  // Race condition risk
+//         }
+//     }
+// ).
 //
 // Parameters:
-// - condition: Delegate that returns boolean, determines if task continues
-// - func: Delegate containing the work to be performed each iteration
-// - increment: (Optional) Delegate for incrementing loop variables
-// - delay: (Optional) Time in seconds to wait between iterations
+// - condition: Delegate returning boolean to continue task
+// - func: Delegate containing work to perform
+// - increment: Optional delegate for loop variable updates
+// - delay: Optional seconds between iterations
 //
 // Notes:
-// - Requires a global 'scheduler' (TaskScheduler instance) to be available
-// - All taskified methods and loops are automatically added to the scheduler
-// - Tasks run once by default for regular methods
-// - For-loops and While-loops run based on their conditions
-// - Tasks maintain their own state in lexicons
-// - Use callbacks to communicate between tasks and outer scope
-// - Taskified while-loops are just taskified for-loops without increment step
+// - Requires global 'scheduler' (TaskScheduler instance)
+// - All public methods automatically become scheduled tasks
 //
 // Dependencies:
-// - TaskScheduler.ks: Task scheduling system
-// - KObject.ks: KOSY Object System base
-// - Task.ks: Task definition system
-
-
+// - KObject.ks: Base object system
+// - Task.ks: Task definition
+// - Utils.ks: Utility functions
 
 runOncePath("/KOSY/lib/KObject").
 runOncePath("/KOSY/lib/Task").
