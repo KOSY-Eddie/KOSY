@@ -82,6 +82,7 @@ function BaseObject{
     
     local object_id is create_id().
     local class_name is "Object".
+    local full_name is "Object".
 
     self:add("public", setAccessors@).
     self:add("protected", {parameter name, maybeFunc. set self[name] to maybeFunc.}).
@@ -110,10 +111,15 @@ function BaseObject{
     self:protected("setClassName", {
         parameter name.
         set class_name to name.
+        set full_name to class_name + "." + name.
     }).
 
     self:public("getClassName", {
         return class_name.
+    }).
+
+    self:public("getFullClassName", {
+        return full_name.
     }).
 
     self:public("getObjID", {

@@ -29,7 +29,7 @@
 // Runway System:
 // get_runway_params(): Returns standard KSC runway parameters
 // get_runway_vectors(): Calculates runway directional vectors
-// get_runway_heading(): Calculates ideal heading for runway approach
+// get_runway_heading(): Calculates ideal heading to stay centered on runway
 // print_runway_debug(): Displays runway parameters
 //
 // Function Utilities:

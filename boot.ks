@@ -1,125 +1,79 @@
-global systemvars is lex("DEBUG", true).
+clearscreen.
+global systemvars is lex("DEBUG", false).
 
 runOncePath("/KOSY/lib/FileWriter").
 runOncePath("/KOSY/lib/TaskScheduler").
 runOncePath("/KOSY/lib/KOSYView/DisplayBuffer").
-
-clearscreen.
-
-global fWriter is FileWriter():new.
-fWriter:start().
-
-//fWriter:start().
-set CONFIG:IPU to 2000.  // Fixed IPU
+runOncePath("/KOSY/lib/KOSYView/ContainerView").
+runOncePath("/KOSY/lib/KOSYView/TextView").
 
 // Create display buffer
-local screenBuffer is DisplayBuffer(terminal:width, terminal:height):new.
+global screenBuffer is DisplayBuffer(terminal:width, terminal:height-1):new.
 
-// Create bouncing text
-function BouncingText {
-    local self is TaskifiedObject():extend.
-    self:setClassName("BouncingText").
-    
-    local str is "000".
-    local bounds_ is lex("width", str:length, "height", 1).
-    
-    local pos is lex(
-        "x", round(random() * (terminal:width - bounds_:width)),
-        "y", round(random() * (terminal:height - bounds_:height - 1))
-    ).
-    
-    local SPEED is 10.
-    local initAngle is random() * (60 - 30) + 30.
-    local vel is lex(
-        "x", cos(initAngle) * SPEED,
-        "y", sin(initAngle) * SPEED
-    ).
-    
-    local lastPhysicsUpdate is time:seconds.
-    local lastDisplayUpdate is time:seconds.
-    local PHYSICS_RATE is 0.05.  // 50hz physics
-    local DISPLAY_RATE is 0.05.  // 10hz display
-    
-    self:publicS("updatePhysics", {
-        local currentTime is time:seconds.
-        local dt is currentTime - lastPhysicsUpdate.
+// Main vertical container for the whole layout
+local mainContainer is VContainerView():new.
+mainContainer:setPosition(2, 1).
+mainContainer:setSpacing(1).
 
-        //if dt >= PHYSICS_RATE {
-            // Update position using dt
-            set pos:x to pos:x + (vel:x * dt).
-            set pos:y to pos:y + (vel:y * dt).
-            
-            // Bounce logic
-            if(pos:x + bounds_:width >= terminal:width) {
-                set pos:x to terminal:width - bounds_:width.
-                set vel:x to -vel:x.
-            } else if(pos:x < 0) {
-                set pos:x to 0.
-                set vel:x to -vel:x.
-            }
-            
-            if(pos:y + bounds_:height >= terminal:height-1) {
-                set pos:y to terminal:height - bounds_:height - 1.
-                set vel:y to -vel:y.
-            } else if(pos:y < 0) {
-                set pos:y to 0.
-                set vel:y to -vel:y.
-            }
-            
-            set lastPhysicsUpdate to currentTime.
-        //}
-        
-    }).
-    
-    self:publicS("updateDisplay", {
-        //local currentTime is time:seconds.
-        //if currentTime - lastDisplayUpdate >= DISPLAY_RATE {
-            screenBuffer:clearBuffer().
-            screenBuffer:place(round(scheduler:getCPUUsage()):toString(), round(pos:x), round(pos:y)).
-            screenBuffer:render().
-            //set lastDisplayUpdate to currentTime.
-        //}
-    }).
+// Header section (horizontal)
+local headerContainer is HContainerView():new.
+headerContainer:setSpacing(3).
 
-    self:public("greedyPhysics",{
-        parameter greedyCount.
-        local isDone is false.
-       
-        until greedyCount <=0 {
-            self:updatePhysics().
-            self:updateDisplay().
-            //wait DISPLAY_RATE.
-            set greedyCount to greedyCount - 1.
-        }
-    }).
+local title is TextView():new.
+local timet is TextView():new.
+title:setText("=== Kerbal Flight Computer ===").
+timet:setText("T+: 10:23:45").
+headerContainer:addChild(title).
+headerContainer:addChild(timet).
 
-    
-    //Create separate tasks for physics and display
-    scheduler:addTask(Task(lex(
-        "condition", { return true. },
-        "work", { scheduler:addTask(Task(lex("work",{self:greedyPhysics(100).})):new). },
-        "delay", 1
-    )):new).
-    
+// Stats section (two columns)
+local statsContainer is HContainerView():new.
+statsContainer:setSpacing(5).
 
-    // local function auto {
-    //     self:while({return true.}, {
-    //         self:updatePhysics().
-    //         self:updateDisplay().
-    //     }, 0).
-    // }
-    // auto().
-    return defineObject(self).
-}
+// Left column of stats
+local leftStats is VContainerView():new.
+leftStats:setSpacing(1).
+local altt is TextView():new.
+local spd is TextView():new.
+local apo is TextView():new.
+altt:setText("Altitude: 100.5 km").
+spd:setText("Speed: 2,250 m/s").
+apo:setText("Apoapsis: 150.2 km").
+leftStats:addChild(altt).
+leftStats:addChild(spd).
+leftStats:addChild(apo).
 
+// Right column of stats
+local rightStats is VContainerView():new.
+rightStats:setSpacing(1).
+local per is TextView():new.
+local inc is TextView():new.
+local fuel is TextView():new.
+per:setText("Periapsis: 95.8 km").
+inc:setText("Inclination: 5.3°").
+fuel:setText("Fuel: 75%").
+rightStats:addChild(per).
+rightStats:addChild(inc).
+rightStats:addChild(fuel).
 
-// Create bouncing text instance
-local bouncer is BouncingText():new.
+// Add columns to stats container
+statsContainer:addChild(leftStats).
+statsContainer:addChild(rightStats).
+
+// Footer section
+local footer is TextView():new.
+footer:setText("=== Press [ESC] to exit ===").
+
+// Add all sections to main container
+mainContainer:addChild(headerContainer).
+mainContainer:addChild(statsContainer).
+mainContainer:addChild(footer).
+
+// Initial draw
+mainContainer:draw().
 
 // Main loop
 until false {
     scheduler:step().
     screenBuffer:render().
-    //bouncer:updatePhysics().
-    //bouncer:updateDisplay().
 }.

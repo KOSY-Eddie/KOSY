@@ -49,7 +49,7 @@
 // - global filewriter
 
 
-local function DebugObject {
+function DebugObject {
     local self is BaseObject():extend.
     self:setClassName("DebugObject").
     

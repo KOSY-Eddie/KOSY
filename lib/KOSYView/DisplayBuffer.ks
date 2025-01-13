@@ -16,15 +16,23 @@ function DisplayBuffer {
         return y * width + x.
     }
 
-    self:public("place", {
-        parameter replacement, posX, posY.
+self:public("place", {
+    parameter replacement, posX, posY.
 
-        local bufferIdx is xy_to_bufferIdx(posX, posY).
-        set buffer to buffer:insert(bufferIdx, replacement).
+    local bufferIdx is xy_to_bufferIdx(posX, posY).
+    local initalLen is buffer:length.
+    set buffer to buffer:insert(bufferIdx, replacement).
+    //print "removeIdxStart: " + (bufferIdx + replacement:length) + " replacementlen: " 
+    //+ replacement:length + " bufferlen: " + buffer:length + " initLen: " + initalLen.
+    if bufferIdx + replacement:length > initalLen
+        set buffer to buffer:remove(initalLen,buffer:length - initalLen).
+    else
         set buffer to buffer:remove(bufferIdx + replacement:length, replacement:length).
+    set dirty to true.
+}).
 
-        set dirty to true.
-    }).
+
+
 
 
     self:public("clearBuffer", {

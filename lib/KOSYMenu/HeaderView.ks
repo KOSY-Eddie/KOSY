@@ -1,19 +1,21 @@
-runOncePath("/KOSY/lib/KOSYView/core").
-runOncePath("/KOSY/lib/KOSYView/specialized").
+runOncePath("/KOSY/lib/TaskifiedObject.ks").
 
 function HeaderView {
-    parameter drawableAreaIn, titleText.
-    local self is View(drawableAreaIn):extend.
+    parameter titleText.
+    local self is View():extend.
     self:setClassName("HeaderView").
-
-    // Create title and time text views
-    local titleView is TextView(DrawableArea(0,titleText:length,0,0):new,titleText):new.
-    local timeView is TextView(DrawableArea(self:drawableArea:lastCol:get()-15,self:drawableArea:lastCol:get(),0,0):new,""):new.
-
+    
+    // Initialize with full width, 1 line height
+    self:init(terminal:width, 1).
+    
+    // Protected members
+    self:protected("title", titleText).
+    self:protected("timeText", "").
+    
     // Format time as Y# D## HH:MM:SS in Kerbin time
-    function formatKerbinTime {
+    local function formatKerbinTime {
         parameter totalSeconds.
-
+        
         // Kerbin time constants
         local SECONDS_PER_MINUTE is 60.
         local MINUTES_PER_HOUR is 60.
@@ -47,18 +49,34 @@ function HeaderView {
         }
         return num:tostring.
     }
-
-    local function clock{
-        self:while({return true.},{
-            local scheduledTasks is scheduler:scheduledTasks().
-            local pendingTasks is scheduler:pendingTasks().
-            titleView:setText("Tasks: " + scheduledTasks+ " Pending: " + pendingTasks).
-            timeView:setText(formatKerbinTime(time:seconds)).
-        }, 1).
-    }
-
-
-    clock().
-
+    
+    // Override draw method
+    self:public("draw", {
+        if not self:visible { return. }
+        
+        local taskInfo is "Tasks: " + scheduler:scheduledTasks() + 
+                         " Pending: " + scheduler:pendingTasks().
+        local timeInfo is formatKerbinTime(time:seconds).
+        
+        // Draw task info on left
+        screenBuffer:place(taskInfo, 
+            self:position:x, 
+            self:position:y).
+            
+        // Draw time on right
+        screenBuffer:place(timeInfo, 
+            self:position:x + self:dimensions:width - timeInfo:length,
+            self:position:y).
+            
+        set self:dirty to false.
+    }).
+    
+    // Start the update clock
+    scheduler:addTask(Task(lex(
+        "condition", { return true. },
+        "work", { set self:dirty to true. },
+        "delay", 1
+    )):new).
+    
     return defineObject(self).
 }
