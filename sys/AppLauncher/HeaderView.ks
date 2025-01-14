@@ -1,18 +1,33 @@
-runOncePath("/KOSY/lib/TaskifiedObject.ks").
-
+runOncePath("/KOSY/lib/KOSYView/TextView").
+runOncePath("/KOSY/lib/KOSYView/SpacerView").
+// HeaderView.ks
 function HeaderView {
-    parameter titleText.
-    local self is View():extend.
+    local self is HContainerView():extend.
     self:setClassName("HeaderView").
     
-    // Initialize with full width, 1 line height
-    self:init(terminal:width, 1).
+    // Create header container
+    local headerContainer is HContainerView():new.
     
-    // Protected members
-    self:protected("title", titleText).
-    self:protected("timeText", "").
+    // Current app text
+    local currentAppText is TextView():new.
+    currentAppText:setText("AppLauncher").
     
-    // Format time as Y# D## HH:MM:SS in Kerbin time
+    // Create spacer
+    local headerSpacer is SpacerView():new.
+    headerSpacer:setWidth(terminal:width - currentAppText:getWidth() - 17).
+    
+    // Clock text
+    local clockText is TextView():new.
+    clockText:setText("00:00").
+    
+    // Add components to container
+    headerContainer:addChild(currentAppText).
+    headerContainer:addChild(headerSpacer).
+    headerContainer:addChild(clockText).
+    
+    // Add container to self
+    self:addChild(headerContainer).
+
     local function formatKerbinTime {
         parameter totalSeconds.
         
@@ -49,34 +64,12 @@ function HeaderView {
         }
         return num:tostring.
     }
-    
-    // Override draw method
-    self:public("draw", {
-        if not self:visible { return. }
-        
-        local taskInfo is "Tasks: " + scheduler:scheduledTasks() + 
-                         " Pending: " + scheduler:pendingTasks().
-        local timeInfo is formatKerbinTime(time:seconds).
-        
-        // Draw task info on left
-        screenBuffer:place(taskInfo, 
-            self:position:x, 
-            self:position:y).
-            
-        // Draw time on right
-        screenBuffer:place(timeInfo, 
-            self:position:x + self:dimensions:width - timeInfo:length,
-            self:position:y).
-            
-        set self:dirty to false.
-    }).
-    
-    // Start the update clock
-    scheduler:addTask(Task(lex(
-        "condition", { return true. },
-        "work", { set self:dirty to true. },
-        "delay", 1
-    )):new).
+    local clockTaskParams is lex("condition",{return true.},"work",{
+        clockText:setText(formatKerbinTime(time:seconds)).
+        },"delay",1).
+    local clockTask is Task(clockTaskParams):new.
+    scheduler:addTask(clockTask).
+
     
     return defineObject(self).
 }

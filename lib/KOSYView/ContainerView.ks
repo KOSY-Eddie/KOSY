@@ -5,7 +5,7 @@ function ContainerView {
     self:setClassName("ContainerView").
     
     self:protected("children", list()).
-    self:protected("spacing", 1).
+    self:protected("spacing", 0).
     
     // Common spacing methods
     self:public("setSpacing", {
@@ -16,6 +16,7 @@ function ContainerView {
     }).
     
     self:public("getChildren",{return self:children:copy().}).
+    
     // Add a child view
     self:public("addChild", {
         parameter child.
@@ -36,7 +37,7 @@ function ContainerView {
     // Draw handling
     self:public("draw", {
         if not self:visible { return. }
-        
+        self:clearBufferRegion().
         for child in self:children {
             if child:isDirty() or self:dirty {
                 child:draw().
@@ -76,6 +77,7 @@ function HContainerView {
         
         for child in self:children {
             child:setPosition(currentX, self:getPosition():y).
+            child:isPositioned:set(true).
             set currentX to currentX + child:getWidth() + self:spacing.
         }
         
@@ -114,6 +116,7 @@ function VContainerView {
         
         for child in self:children {
             child:setPosition(self:getPosition():x, currentY).
+            child:isPositioned:set(true).
             set currentY to currentY + child:getHeight() + self:spacing.
         }
         

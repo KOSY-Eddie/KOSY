@@ -164,3 +164,24 @@ function wrapWithParams {
     
     return boundFunc.
 }
+
+function getDirectories{
+    parameter pathIn.
+
+    local dirs is list().
+
+    if exists(pathIn){
+        local pwd is path().
+        cd(pathIn).
+        list files in allFiles.
+        for file in allFiles{
+            if file:typeName = "VolumeDirectory" and not file:toString:startsWith(".")
+                dirs:add(file).
+        }
+        cd(pwd).
+    }else{
+        print "[ERROR] Invalid Path! " + pathIn.
+    }
+
+    return dirs.
+}

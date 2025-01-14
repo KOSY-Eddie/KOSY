@@ -7,6 +7,7 @@ function SpacerView {
     self:public("fillSpace", {
         if not isNull(self:parent) {
             local parentWidth is self:parent:getWidth().
+            local parentHeight is self:parent:getHeight().
             local usedWidth is 0.
             local spacing is self:parent:spacing.
             local childCount is self:parent:getChildren():length.
@@ -17,6 +18,7 @@ function SpacerView {
                     set usedWidth to usedWidth + child:getWidth().
                 }
             }
+            
             // Account for spacing between elements
             if childCount > 1 {
                 set usedWidth to usedWidth + (spacing * (childCount - 1)).
@@ -24,15 +26,16 @@ function SpacerView {
             
             // Fill remaining space
             self:setWidth(max(0, parentWidth - usedWidth)).
+            
+            // Set height based on parent container type
+            if self:parent:getClassName() = "HContainerView" {
+                self:setHeight(parentHeight).
+            } else {
+                self:setHeight(spacing).
+            }
         }
     }).
-    
-    // Empty draw
-    self:public("draw", {
-        if self:dirty {
-            set self:dirty to false.
-        }
-    }).
+
     
     return defineObject(self).
 }

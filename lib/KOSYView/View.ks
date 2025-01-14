@@ -7,12 +7,12 @@ function View {
     
     // Basic properties
     self:protected("position", lex("x", 0, "y", 0)).
+    self:public("isPositioned", false).
     local position is lex("x",0,"y",0).
     local dimensions is lex("width", initWidth, "height", initHeight).
     self:protected("visible", true).
     self:public("parent", null).
     self:protected("dirty", true).
-    
 
     self:public("getWidth",{return dimensions:width.}).
     self:public("getHeight",{return dimensions:height.}).
@@ -41,14 +41,20 @@ function View {
         set self:visible to false.
         set self:dirty to true.
     }).
+
+    self:public("clearBufferRegion",{
+        screenBuffer:clearRegion(position:x, position:y, self:getwidth(), self:getheight()).
+    }).
     
     // Drawing
     self:public("draw", {
-        if not self:visible { return. }
-        if not self:dirty { return. }
-        
+        if not self:visible { return false. }
+        if not self:dirty { return false. }
+        if not self:isPositioned {return false.}
+         
         // Actual drawing implementation will be in child classes
         set self:dirty to false.
+        return true.
     }).
     
     return defineObject(self).

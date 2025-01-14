@@ -16,24 +16,20 @@ function DisplayBuffer {
         return y * width + x.
     }
 
-self:public("place", {
-    parameter replacement, posX, posY.
+    self:public("place", {
+        parameter replacement, posX, posY.
 
-    local bufferIdx is xy_to_bufferIdx(posX, posY).
-    local initalLen is buffer:length.
-    set buffer to buffer:insert(bufferIdx, replacement).
-    //print "removeIdxStart: " + (bufferIdx + replacement:length) + " replacementlen: " 
-    //+ replacement:length + " bufferlen: " + buffer:length + " initLen: " + initalLen.
-    if bufferIdx + replacement:length > initalLen
-        set buffer to buffer:remove(initalLen,buffer:length - initalLen).
-    else
-        set buffer to buffer:remove(bufferIdx + replacement:length, replacement:length).
-    set dirty to true.
-}).
-
-
-
-
+        local bufferIdx is xy_to_bufferIdx(posX, posY).
+        local initalLen is buffer:length.
+        set buffer to buffer:insert(bufferIdx, replacement).
+        //print "removeIdxStart: " + (bufferIdx + replacement:length) + " replacementlen: " 
+        //+ replacement:length + " bufferlen: " + buffer:length + " initLen: " + initalLen.
+        if bufferIdx + replacement:length > initalLen
+            set buffer to buffer:remove(initalLen,buffer:length - initalLen).
+        else
+            set buffer to buffer:remove(bufferIdx + replacement:length, replacement:length).
+        set dirty to true.
+    }).
 
     self:public("clearBuffer", {
         set buffer to "":padRight(buffer:length).
@@ -44,7 +40,7 @@ self:public("place", {
         parameter x, y, regionWidth, regionHeight.
         
         set regionWidth to min(regionWidth, width - x).
-        set regionHeight to main(regionHeight, height - y).
+        set regionHeight to min(regionHeight, height - y).
         
         local emptyLine is "":padRight(regionWidth).
         from {local i is 0.} until i >= regionHeight step {set i to i + 1.} do {

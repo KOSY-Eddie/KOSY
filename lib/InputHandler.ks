@@ -1,7 +1,7 @@
 runOncePath("/KOSY/lib/taskifiedobject.ks").
 
 function SystemInputHandler {
-    local self is TaskifiedObject():extend.
+    local self is Object():extend.
     self:setClassName("InputHandler").
     
     // Input constants
@@ -34,30 +34,28 @@ function SystemInputHandler {
     }.
     
     local function checkInputFunc {
-        self:while(
-            { return true. },
-            {
-                if terminal:input:haschar {
-                    local ch is terminal:input:getchar().
-                    if ch = terminal:input:upcursorone {
-                        self:callback(INPUT_UP).
-                    } else if ch = terminal:input:downcursorone {
-                        self:callback(INPUT_DOWN).
-                    } else if ch = terminal:input:leftcursorone {
-                        self:callback(INPUT_LEFT).
-                    } else if ch = terminal:input:rightcursorone {
-                        self:callback(INPUT_RIGHT).
-                    } else if ch = terminal:input:return {
-                        self:callback(INPUT_CONFIRM).
-                    } else if ch = "c" {
-                        self:callback(INPUT_CANCEL).
-                    }.
-                }.
+        
+        if terminal:input:haschar {
+            local ch is terminal:input:getchar().
+            if ch = terminal:input:upcursorone {
+                self:callback(INPUT_UP).
+            } else if ch = terminal:input:downcursorone {
+                self:callback(INPUT_DOWN).
+            } else if ch = terminal:input:leftcursorone {
+                self:callback(INPUT_LEFT).
+            } else if ch = terminal:input:rightcursorone {
+                self:callback(INPUT_RIGHT).
+            } else if ch = terminal:input:return {
+                self:callback(INPUT_CONFIRM).
+            } else if ch = "c" {
+                self:callback(INPUT_CANCEL).
+            }.
+        }.
 
-            },
-            .1
-        ).
+            
+            
     }
+
 
     self:public("registerCallback", {
         parameter callbackFunc. 
@@ -65,32 +63,7 @@ function SystemInputHandler {
         setupKPMDelegates().
     }).
     
-    checkInputFunc().
+    self:public("checkInput",{checkInputFunc().}).
     
     return defineObject(self).
 }
-
-
-// runOncePath("/KOSY/lib/TaskScheduler.ks").
-
-// Test code
-// clearscreen.
-// global scheduler is TaskScheduler():new.
-// local input is SystemInputHandler():new.
-
-// print "Press arrow keys, enter, or 'c' to see input working".
-// print "Press 'c' multiple times to exit".
-
-// local count is 0.
-// input:registerCallback({
-//     parameter inputType.
-//     print inputType.
-// }).
-
-// until false {
-//     if scheduler:pendingTasks() > 0 {
-//         scheduler:step().
-//     }else{
-//     wait 0.01.}
-// }.
-
