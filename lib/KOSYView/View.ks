@@ -1,61 +1,67 @@
 runOncePath("/KOSY/lib/TaskifiedObject.ks").
 
 function View {
-    parameter initWidth is 0, initHeight is 0.
     local self is Object():extend.
     self:setClassName("View").
     
     // Basic properties
-    self:protected("position", lex("x", 0, "y", 0)).
-    self:public("isPositioned", false).
-    local position is lex("x",0,"y",0).
-    local dimensions is lex("width", initWidth, "height", initHeight).
-    self:protected("visible", true).
     self:public("parent", null).
-    self:protected("dirty", true).
+    self:protected("spacing", 0).
 
-    self:public("getWidth",{return dimensions:width.}).
-    self:public("getHeight",{return dimensions:height.}).
-
-    self:public("setWidth",{parameter w. set dimensions:width to w.}).
-    self:public("setHeight",{parameter h. set dimensions:height to h.}).
+    self:protected("expandX", true).
+    self:protected("expandY", true).
     
-    self:public("isDirty",{return self:dirty.}).
-    // Position management
-    self:public("setPosition", {
-        parameter x, y.
-        set position:x to x.
-        set position:y to y.
-        set self:dirty to true.
-    }).
-
-    self:public("getPosition",{return position.}).
-    
-    // Visibility
-    self:public("show", {
-        set self:visible to true.
-        set self:dirty to true.
+    // Add setters for expand flags
+    self:public("setExpandX", {
+        parameter expand.
+        set self:expandX to expand.
+        self:drawAll().
     }).
     
-    self:public("hide", {
-        set self:visible to false.
-        set self:dirty to true.
+    self:public("setExpandY", {
+        parameter expand.
+        set self:expandY to expand.
+        self:drawAll().
     }).
 
-    self:public("clearBufferRegion",{
-        screenBuffer:clearRegion(position:x, position:y, self:getwidth(), self:getheight()).
-    }).
+    self:public("getExpandX",{return self:expandX.}).
+    self:public("getExpandY",{return self:expandY.}).
     
+    self:public("setSpacing", {
+        parameter val.
+        set self:spacing to val.
+    }).
+
+    self:public("getContentSize", {
+        parameter isWidthDim. 
+        return 0.
+    }).
+
+    self:public("getContentWidth",{return self:getContentSize(true).}).
+    self:public("getContentHeight",{return self:getContentSize(false).}).
+
     // Drawing
     self:public("draw", {
-        if not self:visible { return false. }
-        if not self:dirty { return false. }
-        if not self:isPositioned {return false.}
+        parameter boundsIn. // lex("x", x, "y", y, "width", w, "height", h)
          
-        // Actual drawing implementation will be in child classes
+        // Component does its work (drawing) with provided bounds
         set self:dirty to false.
         return true.
     }).
+
+    self:public("getRoot", {
+        if isNull(self:parent) {
+            return self:new.  // If no parent, this is the root
+        } else {
+            return self:parent:getRoot().  // Recursively find the root
+        }
+    }).
+
+    self:public("drawAll",{
+        screenBuffer:clearBuffer().
+        self:getRoot():draw(lex("x", 0, "y", 0, "width", screenBuffer:getWidth(), "height", screenBuffer:getHeight())).
+    }).
+    
     
     return defineObject(self).
 }

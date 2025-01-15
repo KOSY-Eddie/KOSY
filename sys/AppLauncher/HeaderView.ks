@@ -9,20 +9,21 @@ function HeaderView {
     local headerContainer is HContainerView():new.
     
     // Current app text
+    local mainName is TextView():new.
+    mainName:setText("KOSY").
+    mainName:hAlign("left").
     local currentAppText is TextView():new.
     currentAppText:setText("AppLauncher").
-    
-    // Create spacer
-    local headerSpacer is SpacerView():new.
-    headerSpacer:setWidth(terminal:width - currentAppText:getWidth() - 17).
+    currentAppText:hAlign("center").
     
     // Clock text
     local clockText is TextView():new.
     clockText:setText("00:00").
+    clockText:halign("right").
     
     // Add components to container
+    headerContainer:addChild(mainName).
     headerContainer:addChild(currentAppText).
-    headerContainer:addChild(headerSpacer).
     headerContainer:addChild(clockText).
     
     // Add container to self
@@ -70,6 +71,10 @@ function HeaderView {
     local clockTask is Task(clockTaskParams):new.
     scheduler:addTask(clockTask).
 
+    self:public("setAppTitle",{
+        parameter titleText. 
+        currentAppText:setText(titleText).
+    }).
     
     return defineObject(self).
 }
