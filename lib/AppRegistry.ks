@@ -3,18 +3,18 @@ function AppRegistryObject {
       self:setClassName("AppRegistry").
     
     // Public properties will automatically get getters/setters
-    self:public("apps", lexicon()).
-    self:public("metadata", lexicon()).
+    local apps is lex().
     
     // Public methods
     self:public("register", {
-        parameter name, appClass.
+        parameter name, appLaunchFunc.
         print "Registering " + name.
-        self:apps:add(name, appClass).
-        if not self:metadata:haskey(name) {
-            self:metadata:add(name, lexicon()).
-        }.
+
+        set apps[name] to appLaunchFunc.
     }).
+
+
+    self:public("getApps",{return apps.}).
     
     return defineObject(self).
 }.

@@ -2,7 +2,7 @@
 clearscreen.
 print "KOSY Boot Sequence Initiated...".
 print " ".
-global systemvars is lex("DEBUG", false).
+global sysVars is lex("DEBUG", false, "sysConfigPath","/KOSY/var/syscfg","logDir","/KOSY/var/log").
 // Load essential classes
 print "Loading Core Systems...".
 runOncePath("/KOSY/lib/FileWriter").
@@ -10,6 +10,7 @@ runOncePath("/KOSY/lib/TaskScheduler").
 runOncePath("/KOSY/lib/KOSYView/DisplayBuffer").
 runOncePath("/KOSY/lib/InputHandler").
 runOncePath("/KOSY/lib/AppRegistry").
+runOncePath("/KOSY/lib/SystemEvents").
 runOncePath("/KOSY/lib/utils").
 print "Core Systems Loaded.".
 print " ".
@@ -19,41 +20,65 @@ print "Initializing Global Services...".
 global screenBuffer is DisplayBuffer(terminal:width, terminal:height-1):new.
 global inputHandler is SystemInputHandler():new.
 global scheduler is TaskScheduler():new.
+global sysEvents is SystemEvents():new.
 global fwriter is FileWriter():new.
+global appRegistry is AppRegistryObject():new.
+
+local configPath is path(sysVars:sysConfigPath):combine("system.json").
+global systemConfig is lexicon().
+if exists(configPath) {
+    set systemConfig to readJSON(configPath).
+} else {
+    // Create default config
+    set systemConfig to lexicon(
+        "clock", lexicon(
+            "type", "kst"  // default
+        )
+        // Future system configs go here
+    ).
+    writeJSON(systemConfig, configPath).
+}
+
+//system events
+sysEvents:subscribe("configChangeRequested", {
+    parameter newConfigIn.
+    set systemConfig to newConfigIn:copy().
+    // Notify system of change
+    sysEvents:emit("systemConfigChanged", systemConfig,"System").
+}, "System").
+
 print "Global Services Initialized.".
 
-global appRegistry is AppRegistryObject():new.
-// Scan and load apps
-print "Scanning for Applications...".
-local appDirs is getDirectories("/KOSY/sys").
-
-local pwd is path().
-for dir in appDirs{
-    cd(dir).
-    list files in fileList.
-    for file in fileList{
-        if file = "app.ks"{
-            print "Found " + dir.
-            runOncePath(file).
+// App Path Management
+function buildAppRegistry {
+    parameter appDir is path("/KOSY/sys").
+    
+    local appDirNames is getDirectories(appDir).
+    local pwd is path().
+    local appPaths is list().
+    
+    for dir in appDirNames {
+        local fullPath is appDir:combine(dir:name).
+        cd(fullPath).
+        
+        for file in dir {
+            local fn is file:name:split(".")[0].
+            if fn = dir {
+                runOncePath(fullPath:combine(file:name)).
+            }
         }
     }
+    cd(pwd).
 }
-cd(pwd).
-print "Applications Loaded.".
+Print "Building App Registry...".
+buildAppRegistry().
 
 // Launch environment
 print "Launching Environment...".
-local registeredApps is appRegistry:apps:get().
+runPath("/KOSY/lib/applauncher").
 
-if registeredApps:hasKey("AppLauncher") {
-    registeredApps:AppLauncher(registeredApps).
-
-    until false {
-        scheduler:step().
-        screenBuffer:render().
-        inputHandler:checkInput().
-    }.
-
-} else {
-    print "Error: AppLauncher not found!".
-}
+until false {
+    scheduler:step().
+    screenBuffer:render().
+    inputHandler:checkInput().
+}.

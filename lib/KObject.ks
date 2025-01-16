@@ -71,7 +71,7 @@ function isNull{
 }
 
 function Object{
-    if systemVars:DEBUG
+    if sysVars:DEBUG
         return DebugObject().
     return BaseObject().
 }

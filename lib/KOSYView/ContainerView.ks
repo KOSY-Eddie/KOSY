@@ -5,18 +5,47 @@ function ContainerView {
     self:setClassName("ContainerView").
     local children is list().
 
+    // Manual size properties
+    local manualWidth is -1.    // -1 indicates not set
+    local manualHeight is -1.   // -1 indicates not set
+
+    // Size setters
+    self:public("setWidth", {
+        parameter w.
+        set manualWidth to w.
+    }).
+
+    self:public("setHeight", {
+        parameter h.
+        set manualHeight to h.
+    }).
+
+    // Size getters
+    self:public("getManualWidth", {
+        return manualWidth.
+    }).
+
+    self:public("getManualHeight", {
+        return manualHeight.
+    }).
+
+    // Reset manual sizes
+    self:public("resetManualSize", {
+        set manualWidth to -1.
+        set manualHeight to -1.
+    }).
+
     self:public("width", 0).
     self:public("height", 0).
     set self:expandX to true.
     set self:expandY to true.
     
-    // Children management (keep these)
-    self:public("getChildren", {return children:copy().}).
+    // Children management
+    self:public("getChildren", {return children.}).
     self:public("addChild", {
         parameter child.
         children:add(child).
         child:parent:set(self).
-        self:drawAll().
     }).
 
     local function getViewIdx{
@@ -25,17 +54,29 @@ function ContainerView {
         for item in collection{
             if item:hasKey("getObjID") and item:equals(view)
                 return viewIdx.
-            set viewIdx to i+1.
+            set viewIdx to viewIdx+1.
         }
-
+        
         return -1.
     }
+
     self:public("removeChild", {
         parameter child.
         local childIdx is getViewIdx(child,children).
         if childIdx >= 0
             children:remove(childIdx).
         child:parent:set(null).
+        set child to 0.
+    }).
+
+    self:public("switchContent", {
+        parameter newView.
+        
+        self:clean().        
+        self:addChild(newView).
+        if newView:hasKey("setFocus")
+            newView:setFocus(true).  
+        self:drawAll().      
     }).
 
     self:public("clean",{
@@ -74,10 +115,15 @@ function ContainerView {
         local width is boundsIn:width.
         local height is boundsIn:height.
 
-        if not self:expandX {
+        if manualWidth >= 0 {
+            set width to manualWidth.
+        } else if not self:expandX {
             set width to self:getContentWidth().
         }
-        if not self:expandY {
+
+        if manualHeight >= 0 {
+            set height to manualHeight.
+        } else if not self:expandY {
             set height to self:getContentHeight().
         }
 
@@ -88,7 +134,6 @@ function ContainerView {
             "height", height
         ).
     }).
-
 
     //virtual method meant to be overriden
     self:protected("calculateChildBounds",{}).
@@ -117,29 +162,42 @@ local function DirectionalContainerFactory{
             
             child:draw(takenBounds).
             
+            // Only add spacing if this isn't the last element
+            local spacing is choose self:spacing if i < self:getChildren():length - 1 else 0.
+            
             // Update bounds based on container direction
             if isHorizontal {
                 set remainingBounds to lex(
-                    "x", takenBounds:x + takenBounds:width,
+                    "x", takenBounds:x + takenBounds:width + spacing,
                     "y", remainingBounds:y,
-                    "width", remainingBounds:width - takenBounds:width,
+                    "width", remainingBounds:width - takenBounds:width - spacing,
                     "height", remainingBounds:height
                 ).
             } else {
                 set remainingBounds to lex(
                     "x", remainingBounds:x,
-                    "y", takenBounds:y + takenBounds:height,
+                    "y", takenBounds:y + takenBounds:height + spacing,
                     "width", remainingBounds:width,
-                    "height", remainingBounds:height - takenBounds:height
+                    "height", remainingBounds:height - takenBounds:height - spacing
                 ).
             }
         }
     }).
 
 
-    // Generic content size calculation
+    // Override getContentSize to respect manual sizes
     self:public("getContentSize", {
         parameter isWidthDim.
+        
+        // Check if manual size is set
+        if isWidthDim and self:getManualWidth() >= 0 {
+            return self:getManualWidth().
+        }
+        if (not isWidthDim) and self:getManualHeight() >= 0 {
+            return self:getManualHeight().
+        }
+
+        // Original content size calculation
         local shouldSum is (isWidthDim = isHorizontal).
         local total is 0.
         
@@ -183,7 +241,10 @@ local function DirectionalContainerFactory{
         local yStart is containerBounds:y.
         
         local availableSpace is choose width if isHorizontal else height.
-        local childSize is (availableSpace - totalSpacing) / (childCount - childIdx).
+        // Adjust available space for remaining spacing
+        local remainingChildren is (childCount - childIdx).
+        local remainingSpacing is (remainingChildren - 1) * self:spacing.
+        local childSize is (availableSpace - remainingSpacing) / remainingChildren.
         
         return lex(
             "x", xStart,
@@ -193,17 +254,14 @@ local function DirectionalContainerFactory{
         ).
     }).
 
+
     return defineObject(self).
 }
-
-
 
 function HContainerView {
     return DirectionalContainerFactory(true).
 }
 
-
 function VContainerView {
     return DirectionalContainerFactory(false).
 }
-

@@ -46,35 +46,35 @@ function FileWriter {
     local self is BaseObject():extend.
     self:setClassName("FileWriter").
     
-    local fwQueue is Queue().
-    local watchdog is 0.
-
-    self:public("start", {
+    sysEvents:subscribe("fileWriteRequested", {
+        parameter writeData.
         local taskParams is lex(
-            "condition", { return true. },
             "work", {
-                if not fwQueue:empty {
-                    local writeData is fwQueue:pop().
-                    if writeData:overwrite and exists(writeData:filePath) {
-                        deletepath(writeData:filePath).
-                    }
+                if writeData:overwrite and exists(writeData:filePath) {
+                    deletepath(writeData:filePath).
+                }
+                if writeData:isJson {
+                    writeJSON(writeData:message, writeData:filePath).
+                } else {
                     log writeData:message to writeData:filePath.
                 }
-            },
-            "delay", .5
+            }
         ).
-        set watchdog to Task(taskParams):new.
-        scheduler:addTask(watchdog).
-    }).
+        scheduler:addTask(Task(taskParams):new).
+    },self:getClassName()).
+        
+        // Subscribe to config changes
+    sysEvents:subscribe("systemConfigChanged", {
+        parameter configIn.
+        sysEvents:emit("fileWriteRequested", lex(
+            "filePath", path(sysVars:sysConfigPath):combine("system.json"),
+            "message", configIn,
+            "overwrite", true,
+            "isJson", true
+        ), self:getClassName()).
+    }, self:getClassName()).
+    
 
-    self:public("queueWrite", {
-        parameter filePath, message, overwrite is false.
-        fwQueue:push(lex(
-            "filePath", filePath,
-            "message", message,
-            "overwrite", overwrite
-        )).
-    }).
-
+    
     return defineObject(self).
 }

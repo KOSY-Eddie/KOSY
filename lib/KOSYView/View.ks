@@ -61,6 +61,7 @@ function View {
         screenBuffer:clearBuffer().
         self:getRoot():draw(lex("x", 0, "y", 0, "width", screenBuffer:getWidth(), "height", screenBuffer:getHeight())).
     }).
+
     
     
     return defineObject(self).

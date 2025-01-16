@@ -13,7 +13,7 @@ function SystemInputHandler {
     local INPUT_CANCEL is "CANCEL".
     //local INPUT_NONE is "NONE".
     
-    self:protected("callback", {}).
+    self:protected("callback", null).
     //self:protected("lastInput", INPUT_NONE).
     local buttons is addons:kpm:buttons.
 
@@ -50,17 +50,20 @@ function SystemInputHandler {
             } else if ch = "c" {
                 self:callback(INPUT_CANCEL).
             }.
-        }.
-
-            
-            
+        }.      
     }
 
 
     self:public("registerCallback", {
         parameter callbackFunc. 
+        if not isNull(self:callback)
+            self:callback("UNFOCUS").
         set self:callback to callbackFunc.
         setupKPMDelegates().
+    }).
+
+    self:public("unRegisterCallback", {
+        set self:callback to null.
     }).
     
     self:public("checkInput",{checkInputFunc().}).

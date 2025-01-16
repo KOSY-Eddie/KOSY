@@ -126,9 +126,12 @@ function TaskScheduler {
 
     self:public("step", {
         if running {
+            log "Tasks in queue: " + task_count to logPath.
             if _delayedTaskQueue:isReady() {
+                log "Delayed queue is ready" to logPath.
                 local readyTasks is _delayedTaskQueue:getReadyTasks().
                 if readyTasks:isType("list") {
+                    log "Ready tasks: " + readyTasks:length to logPath.
                     for t in readyTasks {
                         self:addTask(t).
                     }
@@ -150,6 +153,7 @@ function TaskScheduler {
             }
         }
     }).
+
     
     self:public("getCPUUsage", {
         return cpuUsage.
