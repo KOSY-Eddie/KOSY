@@ -13,7 +13,8 @@ function View {
     self:public("expandY", true).
     self:public("manualWidth", -1).    // -1 indicates not set
     self:public("manualHeight", -1).   // -1 indicates not set
-    self:public("navigationNode",null).
+    self:public("name",null).
+    self:public("visible", false).
 
     self:public("setBackCallback", {
         parameter callback.
@@ -39,29 +40,52 @@ function View {
     // Drawing
     self:public("draw", {
         parameter boundsIn. // lex("x", x, "y", y, "width", w, "height", h)
-         
-        // Component does its work (drawing) with provided bounds
+        if boundsIn:haskey("debug"){
+            if boundsIn:debug
+                self:debugBounds(boundsIn).
+        }
+        //Component does its work (drawing) with provided bounds
         return true.
     }).
 
     self:public("getRoot", {
         if isNull(self:parent) {
-            return self:new.
+            return self.
         } else {
             return self:parent:getRoot().  
         }
     }).
 
-    self:public("drawAll",{
+    self:public("drawAll", {
+        parameter debugIn is false.
+        if debugIn {
+            clearDebugDir().
+        }.
+
+        if not (defined screenBuffer) {
+            print "screenBuffer not defined!".
+            return.
+        }
+
+        local w is screenBuffer:getWidth().
+        local h is screenBuffer:getHeight().
+        if w = 0 or h = 0 {
+            print "Invalid screen dimensions!".
+            return.
+        }
+
         screenBuffer:clearBuffer().
-        self:getRoot():draw(lex("x", 0, "y", 0, "width", screenBuffer:getWidth(), "height", screenBuffer:getHeight())).
-    }).   
+        self:getRoot():draw(lex("debug", debugIn, "x", 0, "y", 0, "width", w, "height", h)).
+    }).
+
 
     self:public("setParentView", {
         parameter parentView.
         self:setBackCallback({
             local parentContainer is self:parent.
             parentContainer:switchContent(parentView). 
+            parentView:setFocus(true).
+            parentView:drawAll().
         }).
     }).
 
@@ -98,6 +122,45 @@ function View {
             self:backCallback().
         }
     }).
+
+    local function clearDebugDir {
+        local debugDir is "/KOSY/var/debug/view".
+        if not exists(debugDir)
+            return.
+        local pwd is path().
+        cd(debugDir).
+        // Get all files in directory
+        list files in fileList.
+        for file in fileList {
+            if file:isfile {
+                deletePath(file:name).
+            }
+        }.
+        
+        // Now delete the empty directory
+        deletePath(debugDir).
+        createDir(debugDir).
+        cd(pwd).
+    }.
+
+
+    self:protected("debugBounds", {
+        parameter boundsIn.
+        
+        local debugDir is "/KOSY/var/debug/view/".
+        local filename is debugDir + self:getObjID() + ".txt".
+        
+        log "objID,class,parent,x,y,width,height" to filename.
+        log self:getObjID() + "," +
+            (choose self:getClassName() if isNull(self:name) else self:name + "(" + self:getClassName() + ")") + "," + 
+            (choose self:parent:getObjID() if not isNull(self:parent) else "null") + "," +
+            boundsIn:x + "," + 
+            boundsIn:y + "," + 
+            boundsIn:width + "," + 
+            boundsIn:height to filename.
+    }).
+
+
     
     return defineObject(self).
 }

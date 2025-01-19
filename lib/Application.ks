@@ -11,10 +11,10 @@ function Application {
     textView_:settext(self:getClassName()).
     self:mainView:addChild(textView_).
 
-    self:public("launch",{
-        parameter callback.
-        callback(lex("title", self:getClassName(), "mainView", self:mainView)).
-    }).
+    // self:public("launch",{
+    //     parameter callback.
+    //     callback(lex("title", self:getClassName(), "mainView", self:mainView)).
+    // }).
 
     self:public("switchToView", {
         parameter newView.

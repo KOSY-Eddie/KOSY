@@ -10,7 +10,6 @@ function MenuList {
         set self to VContainerView():extend.
 
     self:setClassName("MenuList").
-    self:setFocus(true).
     
     // Track focus and selected item
     local selectedIndex is 0.
@@ -34,16 +33,18 @@ function MenuList {
     local parentSelfFocus is self:setFocus.
     self:public("setFocus", {
         parameter focused.
+        parentSelfFocus(focused).
                 
         if focused {
             // Only set cursor position if nothing is currently selected
             // This preserves cursor position when returning from submenus
-            if selectedIndex = 0 and self:getChildren():length > 0 {
-                self:getChildren()[0]:setSelected(true).
+            if self:getChildren():length > 0 {
+                self:getChildren()[selectedIndex]:setSelected(true).
             }
+        }else{
+            self:getChildren()[selectedIndex]:hideCursor().
         }
 
-        parentSelfFocus(focused).
     }).
 
 
@@ -63,10 +64,6 @@ function MenuList {
         // Create all menu items first so they can be referenced
         local optionItems is lex().
         for option in configIn:options {
-            if not option:haskey("id") {
-                print "Option must have id".
-                continue.
-            }
             local optionItem is MenuItem():new.
             optionItem:setText(option:text).
             optionItem:hAlign("left").
@@ -83,7 +80,6 @@ function MenuList {
         menuItem:addSubmenu(submenu).
         return menuItem.
     }).
-
 
     
     self:public("handleInput", {

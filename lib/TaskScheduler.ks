@@ -80,7 +80,7 @@ function TaskScheduler {
     
     // CPU usage smoothing
     local cpu_window is list().
-    local window_size is 50.
+    local window_size is 10.
     
     self:public("newTaskID", {
         local taskId is nextTaskId.

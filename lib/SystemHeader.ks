@@ -5,10 +5,10 @@ function SystemHeader {
     local self is HContainerView():extend.
     self:setClassName("SystemHeader").
     
-    local missionStartTime is time:seconds.
     
     // Create header container
     local headerContainer is HContainerView():new.
+    headerContainer:name:set("Header Container").
     
     // Current app text
     local mainName is TextView():new.
@@ -64,7 +64,6 @@ function SystemHeader {
         local timeStr is "Y" + years + " D" + padding(days) + " " + 
             padding(units:hours) + ":" + padding(units:minutes) + ":" + 
             padding(units:seconds).
-        log "KST length: " + timeStr:length + " string: '" + timeStr + "'" to "debug.log".
         return timeStr.
     }
 
@@ -75,7 +74,6 @@ function SystemHeader {
         local units is calculateTimeUnits(secondsIn, HOURS_PER_DAY).
         local timeStr is "T+" + (choose (units:days + "d ") if units:days > 0 else "") +
             padding(units:hours) + ":" + padding(units:minutes) + ":" + padding(units:seconds).
-        log "MET length: " + timeStr:length + " string: '" + timeStr + "'" to "debug.log".
         return timeStr.
     }
 

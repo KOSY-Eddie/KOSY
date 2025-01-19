@@ -87,7 +87,7 @@ function SystemConfigView {
     )).
     
     self:addChild(clockConfig).
-    self:setFocus(true).
+    //self:setFocus(true).
     return defineObject(self).
 }
 

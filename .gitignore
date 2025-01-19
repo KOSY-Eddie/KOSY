@@ -6,3 +6,5 @@ scratch.ks
 .vscode/
 sandbox/
 diary/
+*.py
+*.md

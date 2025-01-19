@@ -114,8 +114,8 @@ function TaskMonitorView {
     
     // Update task
     local function updateDisplay {
-        local scheduledTasks is scheduler:scheduledTasks().
-        local waitingTasks is scheduler:waitingTasks().
+        local scheduledTasks is scheduler:scheduledTasks(5).
+        local waitingTasks is scheduler:waitingTasks(5).
         
         // Update info section
         textView_info:setText(
@@ -135,12 +135,12 @@ function TaskMonitorView {
         for schedTask in scheduledTasks {
             scheduledTaskList:addChild(createTaskDataRow(schedTask, timeNow, true)).
         }
-        
-        self:drawAll().
+        if not isNull(self:parent)
+            self:drawAll().
     }
     
     local updateStatsTaskParams is lex(
-        "condition", { return self:isFocused. },
+        "condition", { return not isNull(self:parent). },
         "work", updateDisplay@,
         "delay", 0.1,
         "name", "Task Scheduler Stat Update"

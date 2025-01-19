@@ -18,21 +18,44 @@ function DisplayBuffer {
 
     self:public("place", {
         parameter replacement, posX, posY.
-        if validateCoords(posX, posY)
+        
+        // Validate input parameters
+        if isNull(replacement) {
             return 1.
+        }
+        
+        if validateCoords(posX, posY) {
+            return 1.
+        }
+
+        // Protect against buffer overflow
+        local bufferIdx is xy_to_bufferIdx(posX, posY).
+        if bufferIdx >= buffer:length {
+            return 1.
+        }
 
         // Replace char(10) with a single space, views are supposed to handle newlines
         local processed is replacement:replace(char(10), " ").
+        
+        // Protect against replacement text too long
+        if bufferIdx + processed:length > buffer:length {
+            set processed to processed:substring(0, buffer:length - bufferIdx).
+        }
 
-        local bufferIdx is xy_to_bufferIdx(posX, posY).
+        // Perform buffer operations with length checks
         local initalLen is buffer:length.
         set buffer to buffer:insert(bufferIdx, processed).
-        if bufferIdx + processed:length > initalLen
+        
+        if bufferIdx + processed:length > initalLen {
             set buffer to buffer:remove(initalLen, buffer:length - initalLen).
-        else
+        } else {
             set buffer to buffer:remove(bufferIdx + processed:length, processed:length).
+        }
+        
         set dirty to true.
+        return 0.
     }).
+
 
 
 

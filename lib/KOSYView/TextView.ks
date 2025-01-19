@@ -127,7 +127,7 @@ function TextView {
     }
 
 
-
+    local super_draw is self:draw@.
     // Modified draw method
     self:public("draw", {
         parameter boundsIn.
@@ -155,6 +155,8 @@ function TextView {
                 screenBuffer:place(line, x, y).
             }
         }
+
+        super_draw(boundsIn).
     }).
 
     // Modified content size calculation
