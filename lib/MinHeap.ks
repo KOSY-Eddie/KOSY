@@ -114,6 +114,15 @@ function MinHeap {
     self:public("isEmpty", {
         return count = 0.
     }).
+
+    self:public("getHeapCopy", {
+        parameter maxCount is -1.  // Default to all items
+        if maxCount > 0 and maxCount < count {
+            return heap_list:sublist(0, maxCount).
+        }
+        return heap_list:copy().
+    }).
+
     
     return defineObject(self).
 }

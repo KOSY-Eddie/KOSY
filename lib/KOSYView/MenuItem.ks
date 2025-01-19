@@ -10,8 +10,8 @@ function MenuItem {
     local onSelect is { }.
     local currentCursor is standardCursor.
     local originalText is "".
-    local submenu is 0.  
-    local submenuContainer is 0.
+    local submenu is null.  
+    local submenuContainer is null.
     
     local textLabel is TextView():new.
     self:addChild(textLabel).
@@ -29,7 +29,7 @@ function MenuItem {
     self:public("addSubmenu", {
         parameter menuItemIn.
         if menuItemIn:getClassName() <> "MenuList" {
-            print "Error: Submenu must be a MenuList".
+            //print "Error: Submenu must be a MenuList".
             return.
         }
         set submenu to menuItemIn.
@@ -44,7 +44,7 @@ function MenuItem {
         set submenuContainer to HContainerView():new.
         local spacer is TextView():new.
         spacer:setText("  ").
-        spacer:setExpandX(false).
+        spacer:expandx:set(false).
         
         submenuContainer:addChild(spacer).
         submenuContainer:addChild(submenu).
@@ -68,7 +68,7 @@ function MenuItem {
     }).
     
     self:public("triggerSelect", {
-        if submenu <> 0 {
+        if not isNull(submenu) {
             set currentCursor to choose submenuCursor if currentCursor = standardCursor else standardCursor.
             updateLabelText(originalText).
             

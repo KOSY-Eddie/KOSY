@@ -43,9 +43,9 @@ function AppLauncher {
     // Menu Management Functions
     local function createAppMenu {
         local menu is MenuList():new.
-        menu:setExpandX(false).
-        menu:setExpandY(false).
-        menu:setWidth(15).
+        menu:expandX:set(false).
+        menu:expandY:set(false).
+        menu:manualWidth:set(15).
         local allapps is appRegistry:getApps().
         
         for appName in allapps:keys {
@@ -69,7 +69,7 @@ function AppLauncher {
 
     // Rest of the code remains the same...
     local function setupHeader {
-        header:setExpandY(false).
+        header:expandY:set(false).
         mainContainer:addChild(header).
     }
 

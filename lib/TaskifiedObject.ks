@@ -128,6 +128,7 @@ function TaskifiedObject {
                 }
                 
                 set taskParams:work to boundFunc.
+                set taskParams:name to "Taskified Func" + self:getClassName + "." + name.
                 local taskifiedFunc is Task(taskParams):new.
                 scheduler:addTask(taskifiedFunc).
             }.

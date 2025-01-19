@@ -60,8 +60,9 @@ global NULL to lex().
 local objectCounter is 0.
 
 local function create_id {
+    local newId is objectCounter.
     set objectCounter to objectCounter + 1.
-    return objectCounter.
+    return newId.
 }
 
 function isNull{
@@ -87,16 +88,6 @@ function BaseObject{
     self:add("public", setAccessors@).
     self:add("protected", {parameter name, maybeFunc. set self[name] to maybeFunc.}).
 
-    function create_guid {
-        local part_index is floor(random() * ship:parts:length).
-        local random_part is ship:parts[part_index].
-        
-        local part_component is round(random_part:uid:substring(0, 4):tonumber() * random() * 10000).
-        local time_component is round(time:seconds * random() * 10000).
-        local random_component is round(random() * 10000 * random()).
-        
-        return part_component + "-" + time_component + "-" + random_component.
-    }
 
     self:public("equals", {
         parameter other.
@@ -111,7 +102,7 @@ function BaseObject{
     self:protected("setClassName", {
         parameter name.
         set class_name to name.
-        set full_name to class_name + "." + name.
+        set full_name to full_name + "." + name.
     }).
 
     self:public("getClassName", {

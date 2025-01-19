@@ -46,6 +46,7 @@ runOncePath("/KOSY/lib/MinHeap.ks").
 function TaskWrapper {
     parameter taskToWrap, executionTime, idx.
     local self is Object():extend.
+    self:setClassName("TaskWrapper").
     
     self:public("task", taskToWrap).
     self:public("value", executionTime).
@@ -63,10 +64,9 @@ function TaskWrapper {
 }
 
 function DelayedTaskQueue {
-    local self is Object():extend.
+    local self is MinHeap():extend.
     self:setClassName("DelayedTaskQueue").
     
-    local heap is MinHeap():new.
     local nextReadyTime is 0.
     local insertionCounter is 0.
     
@@ -79,33 +79,29 @@ function DelayedTaskQueue {
         if nextReadyTime = 0 {
             set nextReadyTime to wrappedTask:value:get().
         }
-        heap:insert(wrappedTask).
+        self:insert(wrappedTask).
     }).
     
     self:public("getReadyTasks", {
         local readyTasks is list().
         local currentTime is time:seconds.
         
-        until heap:isEmpty() {
-            local nextTask is heap:peek().
+        until self:isEmpty() {
+            local nextTask is self:peek().
             if nextTask:value:get() > currentTime {
                 set nextReadyTime to nextTask:value:get().
                 break.
             }
             
             readyTasks:add(nextTask:task:get()).
-            heap:extract_min().
+            self:extract_min().
         }
         
-        if heap:isEmpty() {
+        if self:isEmpty() {
             set nextReadyTime to 0.
         }
         
         return readyTasks.
-    }).
-    
-    self:public("count", {
-        return heap:size().
     }).
     
     self:public("isReady", {

@@ -70,11 +70,10 @@ runOncePath("/KOSY/lib/MinHeap.ks").
 runOncePath("/KOSY/lib/Task.ks").
 
 function TaskScheduler {
-    local self is Object():extend.
+    local self is MinHeap():extend.
     self:setClassName("TaskScheduler").
-    local heap is MinHeap():new.
+    
     local _delayedTaskQueue is DelayedTaskQueue():new.
-    local task_count is 0.
     local running is true.
     local cpuUsage is 0.
     local nextTaskId is 0.
@@ -91,8 +90,7 @@ function TaskScheduler {
         
     self:public("addTask", {
         parameter newTask.
-        heap:insert(newTask).
-        set task_count to task_count + 1.
+        self:insert(newTask).
     }).
 
     self:public("addDelayedTask", {
@@ -103,8 +101,7 @@ function TaskScheduler {
     self:protected("executeNext", {
         local startTime is time:seconds.
         
-        local currentTask is heap:extract_min().
-        set task_count to task_count - 1.
+        local currentTask is self:extract_min().
         currentTask:execute(self).
         
         local cycleTime is (time:seconds - startTime).
@@ -126,19 +123,16 @@ function TaskScheduler {
 
     self:public("step", {
         if running {
-            log "Tasks in queue: " + task_count to logPath.
             if _delayedTaskQueue:isReady() {
-                log "Delayed queue is ready" to logPath.
                 local readyTasks is _delayedTaskQueue:getReadyTasks().
                 if readyTasks:isType("list") {
-                    log "Ready tasks: " + readyTasks:length to logPath.
                     for t in readyTasks {
                         self:addTask(t).
                     }
                 }
             }
             
-            if task_count > 0 {
+            if not self:isEmpty() {
                 self:executeNext().
             } else {
                 cpu_window:add(0).
@@ -154,7 +148,6 @@ function TaskScheduler {
         }
     }).
 
-    
     self:public("getCPUUsage", {
         return cpuUsage.
     }).
@@ -164,11 +157,13 @@ function TaskScheduler {
     }).
 
     self:public("scheduledTasks", {
-        return task_count.
+        parameter maxCountIn is -1.
+        return self:getHeapCopy(maxCountIn).
     }).
 
-    self:public("pendingTasks", {
-        return task_count + _delayedTaskQueue:count().
+    self:public("waitingTasks", {
+        parameter maxCountIn is -1.
+        return  _delayedTaskQueue:getHeapCopy(maxCountIn).
     }).
     
     return defineObject(self).

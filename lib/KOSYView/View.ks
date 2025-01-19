@@ -4,38 +4,34 @@ function View {
     local self is Object():extend.
     self:setClassName("View").
     
-    // Basic properties
+    self:protected("isFocused", false).
+    self:protected("backcallBack", {appMenu:setFocus(true).}).
+    self:protected("nextCallBack", {}).
+    self:public("spacing", 0).
     self:public("parent", null).
-    self:protected("spacing", 0).
+    self:public("expandX", true).
+    self:public("expandY", true).
+    self:public("manualWidth", -1).    // -1 indicates not set
+    self:public("manualHeight", -1).   // -1 indicates not set
+    self:public("navigationNode",null).
 
-    self:protected("expandX", true).
-    self:protected("expandY", true).
-    
-    // Add setters for expand flags
-    self:public("setExpandX", {
-        parameter expand.
-        set self:expandX to expand.
-        self:drawAll().
-    }).
-    
-    self:public("setExpandY", {
-        parameter expand.
-        set self:expandY to expand.
-        self:drawAll().
+    self:public("setBackCallback", {
+        parameter callback.
+        set self:backCallback to callback.
     }).
 
-    self:public("getExpandX",{return self:expandX.}).
-    self:public("getExpandY",{return self:expandY.}).
-    
-    self:public("setSpacing", {
-        parameter val.
-        set self:spacing to val.
+    self:public("setNextCallback", {
+        parameter callback.
+        set self:nextCallback to callback.
     }).
 
-    self:public("getContentSize", {
-        parameter isWidthDim. 
-        return 0.
+    self:public("resetManualSize", {
+        set self:manualWidth to -1.
+        set self:manualHeight to -1.
     }).
+
+    //virtual method meant to be overriden
+    self:public("getContentSize", {}).
 
     self:public("getContentWidth",{return self:getContentSize(true).}).
     self:public("getContentHeight",{return self:getContentSize(false).}).
@@ -45,24 +41,63 @@ function View {
         parameter boundsIn. // lex("x", x, "y", y, "width", w, "height", h)
          
         // Component does its work (drawing) with provided bounds
-        set self:dirty to false.
         return true.
     }).
 
     self:public("getRoot", {
         if isNull(self:parent) {
-            return self:new.  // If no parent, this is the root
+            return self:new.
         } else {
-            return self:parent:getRoot().  // Recursively find the root
+            return self:parent:getRoot().  
         }
     }).
 
     self:public("drawAll",{
         screenBuffer:clearBuffer().
         self:getRoot():draw(lex("x", 0, "y", 0, "width", screenBuffer:getWidth(), "height", screenBuffer:getHeight())).
+    }).   
+
+    self:public("setParentView", {
+        parameter parentView.
+        self:setBackCallback({
+            local parentContainer is self:parent.
+            parentContainer:switchContent(parentView). 
+        }).
     }).
 
+    // Focus management
+    self:public("setFocus", {
+        parameter focused.
+        set self:isFocused to focused.
+        
+        if self:isFocused {
+            // Register for input events
+            inputhandler:registerCallback(self:handleInput@).
+            
+        } else {
+            // Unregister when losing focus
+            inputhandler:unregisterCallback().
+        }
+
+    }).
     
+    self:public("hasFocus", {
+        return self:isFocused.
+    }).
+    
+    self:public("handleInput", {
+        parameter key.
+
+        if key = "unfocus" {
+            self:setFocus(false).
+        } else if key = "left" {
+            self:backCallback().
+        } else if key = "right" {
+            self:nextCallback().
+        } else if key = "cancel"{
+            self:backCallback().
+        }
+    }).
     
     return defineObject(self).
 }

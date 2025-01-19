@@ -51,7 +51,7 @@ print "Global Services Initialized.".
 
 // App Path Management
 function buildAppRegistry {
-    parameter appDir is path("/KOSY/sys").
+    parameter appDir.
     
     local appDirNames is getDirectories(appDir).
     local pwd is path().
@@ -70,8 +70,12 @@ function buildAppRegistry {
     }
     cd(pwd).
 }
-Print "Building App Registry...".
-buildAppRegistry().
+
+Print "Building System App Registry...".
+buildAppRegistry(path("/KOSY/sys")).
+
+Print "Building User App Registry...".
+buildAppRegistry(path("/KOSY/apps")).
 
 // Launch environment
 print "Launching Environment...".

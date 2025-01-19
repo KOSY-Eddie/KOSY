@@ -62,8 +62,11 @@ function Task {
 
     local taskParams is taskParamsIn.
     self:public("taskId", scheduler:newTaskID()).
+    self:public("name", taskParamsIn:name).
     local totalRuntime is 0.
+    local totalRuns is 0.
     self:public("value", 0).
+    self:public("runCount",{return totalRuns.}).
     
     // Cache these at creation
     local hasValidCondition is taskParams:hasKey("condition") and taskParams:condition:isType("UserDelegate").

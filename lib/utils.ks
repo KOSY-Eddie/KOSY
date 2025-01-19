@@ -185,3 +185,19 @@ function getDirectories{
 
     return dirs.
 }
+
+function create_guid {
+    local part_index is floor(random() * ship:parts:length).
+    local random_part is ship:parts[part_index].
+    
+    local part_component is round(random_part:uid:substring(0, 4):tonumber() * random() * 10000).
+    local time_component is round(time:seconds * random() * 10000).
+    local random_component is round(random() * 10000 * random()).
+    
+    return part_component + "-" + time_component + "-" + random_component.
+}
+
+function logDebug {
+    parameter msg.
+    log msg to "/KOSY/debug_focus.txt".
+}

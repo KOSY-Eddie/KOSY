@@ -4,7 +4,7 @@ runOncePath("/KOSY/lib/KOSYView/TextView").
 function Application {
     local self is TaskifiedObject():extend.
 
-    self:protected("mainView", null).
+    self:public("mainView", null).
 
     set self:mainView to VContainerView():new.
     local textView_ is TextView():new.

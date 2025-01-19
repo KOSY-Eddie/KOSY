@@ -90,6 +90,7 @@ function SystemHeader {
 
     // Clock update task
     local clockTaskParams is lex(
+        "name", "System Clock",
         "condition", {return true.},
         "work", {
             if systemConfig:clock:type = "met" {

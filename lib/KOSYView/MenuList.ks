@@ -1,4 +1,5 @@
 runOncePath("/KOSY/lib/KOSYView/ContainerView").
+runOncePath("/KOSY/lib/utils").
 
 function MenuList {
     parameter isHorizontal is false.
@@ -9,26 +10,12 @@ function MenuList {
         set self to VContainerView():extend.
 
     self:setClassName("MenuList").
+    self:setFocus(true).
     
     // Track focus and selected item
-    local hasFocus is false.
     local selectedIndex is 0.
     local alignment is "left".
-    
-    // Callback storage
-    local backCallback is { }.    // Default empty callback
-    local nextCallback is { }.    // Default empty callback
 
-    // Callback setters
-    self:public("setBackCallback", {
-        parameter callback.
-        set backCallback to callback.
-    }).
-
-    self:public("setNextCallback", {
-        parameter callback.
-        set nextCallback to callback.
-    }).
 
     self:public("hAlign",{
         parameter hAlignment.
@@ -43,29 +30,61 @@ function MenuList {
         child:hAlign(alignment).
         super_addChild(child).
     }).
-    
-    // Focus management
+
+    local parentSelfFocus is self:setFocus.
     self:public("setFocus", {
         parameter focused.
-        set hasFocus to focused.
-        
-        if hasFocus {
-            // Register for input events
-            inputhandler:registerCallback(self:handleInput@).
-            
-            // Select first item if nothing selected
+                
+        if focused {
+            // Only set cursor position if nothing is currently selected
+            // This preserves cursor position when returning from submenus
             if selectedIndex = 0 and self:getChildren():length > 0 {
                 self:getChildren()[0]:setSelected(true).
             }
-        } else {
-            // Unregister when losing focus
-            inputhandler:unregisterCallback().
         }
+
+        parentSelfFocus(focused).
     }).
-    
-    self:public("hasFocus", {
-        return hasFocus.
+
+
+    self:public("createOptionMenu", {
+        parameter configIn.  // lex with text, options
+        if not (configIn:haskey("text") and configIn:haskey("options")) {
+            return 0.
+        }
+        
+        local menuItem is MenuItem():new.
+        menuItem:setText(configIn:text).
+        menuItem:vAlign("top").
+        menuItem:expandY:set(false).
+        
+        local submenu is MenuList():new.
+        
+        // Create all menu items first so they can be referenced
+        local optionItems is lex().
+        for option in configIn:options {
+            if not option:haskey("id") {
+                print "Option must have id".
+                continue.
+            }
+            local optionItem is MenuItem():new.
+            optionItem:setText(option:text).
+            optionItem:hAlign("left").
+            optionItem:expandY:set(false).
+            optionItems:add(option:id, optionItem).
+        }
+        
+        // Now set up the onSelect handlers with access to all items
+        for option in configIn:options {
+            optionItems[option:id]:setOnSelect(option:onSelect(optionItems)).
+            submenu:addChild(optionItems[option:id]).
+        }
+        
+        menuItem:addSubmenu(submenu).
+        return menuItem.
     }).
+
+
     
     self:public("handleInput", {
         parameter key.
@@ -94,13 +113,14 @@ function MenuList {
         } else if key = "unfocus" {
             self:setFocus(false).
         } else if key = backKey {
-            backCallback().
+            self:backCallback().
         } else if key = nextKey {
-            nextCallback().
+            self:nextCallback().
         } else if key = "cancel"{
-            appMenu:setFocus(true).
+            self:backCallback().
         }
     }).
+    
 
 
     return defineObject(self).

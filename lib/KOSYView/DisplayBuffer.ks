@@ -13,24 +13,44 @@ function DisplayBuffer {
     local function xy_to_bufferIdx {
         parameter x, y.
 
-        return floor(y) * width + floor(x).
+        return round(y) * width + round(x).
     }
 
     self:public("place", {
         parameter replacement, posX, posY.
-        //dont even try to draw anything out of bounds
         if validateCoords(posX, posY)
             return 1.
 
+        // Replace char(10) with a single space, views are supposed to handle newlines
+        local processed is replacement:replace(char(10), " ").
+
         local bufferIdx is xy_to_bufferIdx(posX, posY).
         local initalLen is buffer:length.
-        set buffer to buffer:insert(bufferIdx, replacement).
-        if bufferIdx + replacement:length > initalLen
-            set buffer to buffer:remove(initalLen,buffer:length - initalLen).
+        set buffer to buffer:insert(bufferIdx, processed).
+        if bufferIdx + processed:length > initalLen
+            set buffer to buffer:remove(initalLen, buffer:length - initalLen).
         else
-            set buffer to buffer:remove(bufferIdx + replacement:length, replacement:length).
+            set buffer to buffer:remove(bufferIdx + processed:length, processed:length).
         set dirty to true.
     }).
+
+
+
+    local function processNewlines {
+        parameter text, startX.
+        local lines is text:split(char(10)).
+        local result is lines[0].
+        local currentX is startX + lines[0]:length.
+        
+        from { local i is 1. } until i >= lines:length step { set i to i + 1. } do {
+            local spacesToEnd is width - currentX.
+            set result to result + " ":padright(spacesToEnd) + lines[i].
+            set currentX to lines[i]:length.
+        }.
+        return result.
+    }.
+
+
 
     self:public("clearBuffer", {
         set buffer to "":padRight(buffer:length).

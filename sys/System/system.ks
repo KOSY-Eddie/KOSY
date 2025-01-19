@@ -5,6 +5,8 @@ runOncePath("/KOSY/lib/KOSYView/MenuList").
 runOncePath("/KOSY/lib/KOSYView/MenuItem").
 runOncePath("/KOSY/lib/Application").
 
+runOncePath("/KOSY/sys/System/TaskMonitorView.ks").
+
 
 // System/System.ks
 function SystemApp {
@@ -13,14 +15,20 @@ function SystemApp {
     
     local container is HContainerView():new.
     local mainMenu is MenuList():new.
-    mainMenu:setExpandY(false).
+    mainMenu:expandY:set(false).
     //mainMenu:setSpacing(2).
     
     // Set up main menu
-    mainMenu:setExpandY(false).
     local item_taskMon is MenuItem():new.
     local item_sysConfig is MenuItem():new.
     item_taskMon:setText("Task Monitor").
+
+    item_taskMon:setOnSelect({
+        local taskMonView is TaskMonitorView():new.
+        taskMonView:setParentView(mainMenu).
+        self:mainView:switchContent(taskMonView). 
+    }).
+
     item_sysConfig:setText("System Config").
     
     item_sysConfig:setOnSelect({
@@ -50,52 +58,40 @@ function SystemConfigView {
     local self is MenuList():extend.
     self:setClassName("SystemConfigView").
     
-    // Main clock settings item
-    local clockConfig is MenuItem():new.
-    clockConfig:setExpandY(false).
-    clockConfig:setText("Clock Settings").
+    local clockConfig is self:createOptionMenu(lex(
+        "text", "Clock Settings",
+        "options", list(
+            lex(
+                "id", "kst",
+                "text", choose "KST *" if systemConfig:clock:type = "kst" else "KST",
+                "onSelect", { parameter items. return {
+                    local tmpConfig is systemConfig:copy().
+                    set tmpConfig:clock:type to "kst".
+                    items["kst"]:setText("KST *").
+                    items["met"]:setText("MET").
+                    sysEvents:emit("configChangeRequested", tmpConfig, self:getClassName()).
+                }.}
+            ),
+            lex(
+                "id", "met",
+                "text", choose "MET *" if systemConfig:clock:type = "met" else "MET",
+                "onSelect", { parameter items. return {
+                    local tmpConfig is systemConfig:copy().
+                    set tmpConfig:clock:type to "met".
+                    items["met"]:setText("MET *").
+                    items["kst"]:setText("KST").
+                    sysEvents:emit("configChangeRequested", tmpConfig, self:getClassName()).
+                }.}
+            )
+        )
+    )).
     
-    local clockSubmenu is MenuList():new.
-
-    // Add items to submenu
-    local kstItem is MenuItem():new.
-    kstItem:setText(choose "KST *" if systemConfig:clock:type = "kst" else "KST").
-    kstItem:hAlign("left").
-    kstItem:setOnSelect({
-        local tmpConfig is systemConfig:copy().
-        set tmpConfig:clock:type to "kst".
-        kstItem:setText("KST *").
-        metItem:setText("MET").
-        sysEvents:emit("configChangeRequested", tmpConfig, self:getClassName()).
-    }).
-
-    local metItem is MenuItem():new.
-    metItem:setText(choose "MET *" if systemConfig:clock:type = "met" else "MET").
-    metItem:hAlign("left").
-    metItem:setOnSelect({
-        local tmpConfig is systemConfig:copy().
-        set tmpConfig:clock:type to "met".
-        metItem:setText("MET *").
-        kstItem:setText("KST").
-        sysEvents:emit("configChangeRequested", tmpConfig, self:getClassName()).
-    }).
-
-    // Add items to submenu
-    clockSubmenu:addChild(kstItem).
-    clockSubmenu:addChild(metItem).
-    clockConfig:addSubmenu(clockSubmenu).
     self:addChild(clockConfig).
-    
-    self:public("setParentView", {
-        parameter parentView.
-        self:setBackCallback({
-            local parentContainer is self:parent.
-            parentContainer:switchContent(parentView). 
-        }).
-    }).
-    
+    self:setFocus(true).
     return defineObject(self).
 }
+
+
 
 // Register with AppRegistry
 appRegistry:register("System", SystemApp@).
