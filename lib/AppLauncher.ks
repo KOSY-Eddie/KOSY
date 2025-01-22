@@ -84,7 +84,7 @@ function AppLauncher {
             newMenuItem:valign("top").
             
             local appConstructor is allapps[appName].
-            newMenuItem:setOnSelect({ 
+            newMenuItem:setAction({ 
                 launchApp(appConstructor():new).
             }).
             
@@ -100,7 +100,7 @@ function AppLauncher {
 
     local function setupContentArea {
         global appMenu is createAppMenu().
-        appMenu:setFocus(true).
+        appMenu:setInput(true).
         appContainer:addChild(createAppPlaceholder()).
         
         contentContainer:addChild(appMenu).

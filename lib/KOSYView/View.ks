@@ -4,8 +4,8 @@ function View {
     local self is Object():extend.
     self:setClassName("View").
     
-    self:protected("isFocused", false).
-    self:protected("backcallBack", {appMenu:setFocus(true).}).
+    self:protected("hasInput", false).
+    self:protected("backcallBack", {}).
     self:protected("nextCallBack", {}).
     self:public("spacing", 0).
     self:public("parent", null).
@@ -62,58 +62,52 @@ function View {
             clearDebugDir().
         }.
 
-        if not (defined screenBuffer) {
-            print "screenBuffer not defined!".
-            return.
-        }
-
         local w is screenBuffer:getWidth().
         local h is screenBuffer:getHeight().
-        if w = 0 or h = 0 {
-            print "Invalid screen dimensions!".
-            return.
-        }
 
         screenBuffer:clearBuffer().
         self:getRoot():draw(lex("debug", debugIn, "x", 0, "y", 0, "width", w, "height", h)).
     }).
 
 
-    self:public("setParentView", {
-        parameter parentView.
-        self:setBackCallback({
-            local parentContainer is self:parent.
-            parentContainer:switchContent(parentView). 
-            parentView:setFocus(true).
-            parentView:drawAll().
-        }).
+    // self:public("setParentView", {
+    //     parameter parentView.
+    //     self:setBackCallback({
+    //         local parentContainer is self:parent.
+    //         parentView:setInput(true).
+    //         parentContainer:switchContent(parentView).
+    //         self:drawAll().
+    //     }).
+    // }).
+
+    self:public("onLoad",{}).
+
+    self:public("getInputStatus",{
+        return self:hasInput.
     }).
 
     // Focus management
-    self:public("setFocus", {
-        parameter focused.
-        set self:isFocused to focused.
+    self:public("setInput", {
+        parameter inputIn.
+        set self:hasInput to inputIn.
         
-        if self:isFocused {
+        if self:hasInput {
             // Register for input events
+            inputhandler:unregisterCallback().
             inputhandler:registerCallback(self:handleInput@).
             
         } else {
             // Unregister when losing focus
-            inputhandler:unregisterCallback().
+            //inputhandler:unregisterCallback().
         }
 
-    }).
-    
-    self:public("hasFocus", {
-        return self:isFocused.
     }).
     
     self:public("handleInput", {
         parameter key.
 
         if key = "unfocus" {
-            self:setFocus(false).
+            self:setInput(false).
         } else if key = "left" {
             self:backCallback().
         } else if key = "right" {

@@ -92,6 +92,7 @@ function TaskifiedObject {
             set taskParams:increment to increment@.
 
         set taskParams["delay"] to delay.
+        set taskParams["name"] to self:getClassName().
 
         scheduler:addTask(Task(taskParams):new).
     }.

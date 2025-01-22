@@ -1,5 +1,4 @@
 runOncePath("/KOSY/lib/KOSYView/TextView").
-runOncePath("/KOSY/lib/KOSYView/SpacerView").
 
 function SystemHeader {
     local self is HContainerView():extend.
@@ -91,7 +90,7 @@ function SystemHeader {
         "name", "System Clock",
         "condition", {return true.},
         "work", {
-            if systemConfig:clock:type = "met" {
+            if sysConfig:getConfig():clock:type = "met" {
                 clockText:setText(formatMETTime(MISSIONTIME):padLeft(20)).
             } else {
                 clockText:setText(formatKerbinTime(time:seconds):padLeft(20)).

@@ -56,13 +56,13 @@ function SystemInputHandler {
 
     self:public("registerCallback", {
         parameter callbackFunc. 
-        if not isNull(self:callback)
-            self:callback("UNFOCUS").
         set self:callback to callbackFunc.
         setupKPMDelegates().
     }).
 
     self:public("unRegisterCallback", {
+        if not isNull(self:callback)
+            self:callback("UNFOCUS").
         set self:callback to null.
     }).
     

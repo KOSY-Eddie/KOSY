@@ -135,17 +135,21 @@ function TaskMonitorView {
         for schedTask in scheduledTasks {
             scheduledTaskList:addChild(createTaskDataRow(schedTask, timeNow, true)).
         }
-        if not isNull(self:parent)
+        if not isNull(self:parent){
             self:drawAll().
+        }
     }
-    
+
     local updateStatsTaskParams is lex(
         "condition", { return not isNull(self:parent). },
         "work", updateDisplay@,
         "delay", 0.1,
         "name", "Task Scheduler Stat Update"
     ).
+
+    self:public("onLoad",{
+        scheduler:addTask(Task(updateStatsTaskParams):new).
+    }).
     
-    scheduler:addTask(Task(updateStatsTaskParams):new).
     return defineObject(self).
 }

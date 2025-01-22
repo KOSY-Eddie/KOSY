@@ -8,10 +8,11 @@ function ContainerView {
     // Children management
     self:public("getChildren", {return children:copy().}).
     self:public("addChild", {
-        parameter child.
-        children:add(child).
-        child:parent:set(self).
-        child:visible:set(true).
+        parameter childIn.
+
+        children:add(childIn).
+        childIn:parent:set(self).
+        //childIn:visible:set(true).
     }).
 
     local function getViewIdx{
@@ -29,11 +30,11 @@ function ContainerView {
     self:public("removeChild", {
         parameter child.
         
-        if child:hasKey("getChildren") {
-            for subChild in child:getChildren() {
-                self:removeChild(subChild).
-            }.
-        }
+        // if child:hasKey("getChildren") {
+        //     for subChild in child:getChildren() {
+        //         self:removeChild(subChild).
+        //     }.
+        // }
         
         // Remove from parent
         local childIdx is getViewIdx(child,children:copy()).
@@ -47,13 +48,15 @@ function ContainerView {
 
 
     self:public("switchContent", {
-        parameter newView.
+        parameter newView, setInput is false.
         
         self:clean().        
         self:addChild(newView).
-        if newView:hasKey("setFocus")
-            newView:setFocus(true).  
-        self:drawAll().      
+        newView:onLoad().
+        if setInput
+            newView:setInput(true).
+        newView:drawAll().
+        // self:drawAll().      
     }).
 
     self:public("clean",{
@@ -146,74 +149,30 @@ local function DirectionalContainerFactory{
         super_draw(boundsIn).
 
         local myBounds is self:calculateMyBounds(boundsIn).
+        local remainingBounds is myBounds:copy().
+        local children is self:getChildren():copy().
         
-        local remainingBounds is myBounds.
-        from {local i is 0.} until i >= self:getChildren():length step {set i to i + 1.} do {
-            local child is self:getChildren()[i].
-
-            local grantedChildBounds is self:calculateChildBounds(i, remainingBounds).
-            local takenBounds is childWantedBounds(child,grantedChildBounds).   
-
+        from {local i is 0.} until i >= children:length step {set i to i + 1.} do {
+            local child is children[i].
+            local grantedBounds is self:calculateChildBounds(i, remainingBounds).
+            local takenBounds is childWantedBounds(child, grantedBounds).
+            
             child:draw(takenBounds).
             
-            local spacing is choose self:spacing if i < self:getChildren():length - 1 else 0.
-            
+            local spacing is choose self:spacing if i < children:length - 1 else 0.
             if isHorizontal {
                 set remainingBounds:x to takenBounds:x + takenBounds:width + spacing.
                 set remainingBounds:width to remainingBounds:width - takenBounds:width - spacing.
             } else {
                 set remainingBounds:y to takenBounds:y + takenBounds:height + spacing.
-                set remainingBounds:height to remainingBounds:height - takenBounds:height - spacing. 
-            }
-
-        }
-
-    }).
-
-    self:public("getContentSize", {
-        parameter isWidthDim.
-        
-        if isWidthDim and self:manualWidth >= 0 {
-            return self:manualWidth.
-        }
-        if (not isWidthDim) and self:manualHeight >= 0 {
-            return self:manualHeight.
-        }
-
-        local shouldSum is (isWidthDim = isHorizontal).
-        local total is 0.
-        
-        for child in self:getChildren() {
-            local size is child:getContentSize(isWidthDim).
-            if shouldSum {
-                set total to total + size.
-            } else {
-                set total to max(total, size).
+                set remainingBounds:height to remainingBounds:height - takenBounds:height - spacing.
             }
         }
-        
-        if shouldSum {
-            return total + (self:spacing * (self:getChildren():length - 1)).
-        }
-        return total.
     }).
-
-    local function childWantedBounds{
-        parameter child, grantedBounds.
-        local wantedBounds is grantedBounds:copy().
-        if not child:expandX:get() {
-            set wantedBounds:width to min(child:getContentWidth(), grantedBounds:width).
-        }
-        if not child:expandY:get() {
-            set wantedBounds:height to min(child:getContentHeight(), grantedBounds:height).
-        }
-        return wantedBounds.
-    }
 
     self:protected("calculateChildBounds", {
         parameter childIdx, containerBounds.
         local childCount is self:getChildren():length.
-        local totalSpacing is (childCount - 1) * self:spacing.
         
         local width is containerBounds:width.
         local height is containerBounds:height.
@@ -234,8 +193,51 @@ local function DirectionalContainerFactory{
         return boundsOut.
     }).
 
+    local function childWantedBounds{
+        parameter child, grantedBounds.
+        local wantedBounds is grantedBounds:copy().
+        if not child:expandX:get() {
+            set wantedBounds:width to min(child:getContentWidth(), grantedBounds:width).
+        }
+        if not child:expandY:get() {
+            set wantedBounds:height to min(child:getContentHeight(), grantedBounds:height).
+        }
+        return wantedBounds.
+    }
+
+    // getContentSize remains the same as it works correctly
+    self:public("getContentSize", {
+        parameter isWidthDim.
+        
+        if isWidthDim and self:manualWidth >= 0 {
+            return self:manualWidth.
+        }
+        if (not isWidthDim) and self:manualHeight >= 0 {
+            return self:manualHeight.
+        }
+
+        local shouldSum is (isWidthDim = isHorizontal).
+        local total is 0.
+        
+        for child in self:getChildren():copy() {
+            local size is child:getContentSize(isWidthDim).
+            if shouldSum {
+                set total to total + size.
+            } else {
+                set total to max(total, size).
+            }
+        }
+        
+        if shouldSum {
+            return total + (self:spacing * (self:getChildren():length - 1)).
+        }
+        return total.
+    }).
+
     return defineObject(self).
 }
+
+
 
 function HContainerView {
     return DirectionalContainerFactory(true).

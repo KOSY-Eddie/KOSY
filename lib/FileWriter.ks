@@ -78,6 +78,7 @@ function FileWriter {
     // Listen for config changes
     sysEvents:subscribe("configChangeRequested", {
         parameter configIn.
+        
         self:write(lex(
             "filePath", path(sysVars:sysConfigPath):combine("system.json"),
             "message", configIn,

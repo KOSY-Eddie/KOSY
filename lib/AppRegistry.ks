@@ -15,6 +15,27 @@ function AppRegistryObject {
 
 
     self:public("getApps",{return apps.}).
+
+    self:public("buildAppRegistry", {
+      parameter appDir.
+      
+      local appDirNames is getDirectories(appDir).
+      local pwd is path().
+      //local appPaths is list().
+      
+      for dir in appDirNames {
+          local fullPath is appDir:combine(dir:name).
+          cd(fullPath).
+          
+          for file in dir {
+              local fn is file:name:split(".")[0].
+              if fn = dir {
+                  runOncePath(fullPath:combine(file:name)).
+              }
+          }
+      }
+      cd(pwd).
+    }). 
     
     return defineObject(self).
 }.

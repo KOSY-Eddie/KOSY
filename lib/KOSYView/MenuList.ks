@@ -30,23 +30,22 @@ function MenuList {
         super_addChild(child).
     }).
 
-    local parentSelfFocus is self:setFocus.
-    self:public("setFocus", {
-        parameter focused.
-        parentSelfFocus(focused).
+    local super_setInput is self:setInput.
+    self:public("setInput", {
+        parameter hasInputIN.
+        super_setInput(hasInputIN).
                 
-        if focused {
-            // Only set cursor position if nothing is currently selected
-            // This preserves cursor position when returning from submenus
-            if self:getChildren():length > 0 {
-                self:getChildren()[selectedIndex]:setSelected(true).
-            }
-        }else{
-            self:getChildren()[selectedIndex]:hideCursor().
+        if self:getChildren():length > 0 {
+            local child is self:getChildren()[selectedIndex].
+            child:setSelected(hasInputIN).
         }
 
     }).
 
+    // self:public("onLoad",{
+    //     self:setInput(true).
+    //     //self:drawAll().
+    // }).
 
     self:public("createOptionMenu", {
         parameter configIn.  // lex with text, options
@@ -104,10 +103,10 @@ function MenuList {
             }
         } else if key = "confirm" {
             if selectedIndex >= 0 and selectedIndex < self:getChildren():length {
-                self:getChildren()[selectedIndex]:triggerSelect().
+                self:getChildren()[selectedIndex]:triggerAction().
             }
         } else if key = "unfocus" {
-            self:setFocus(false).
+            self:setInput(false).
         } else if key = backKey {
             self:backCallback().
         } else if key = nextKey {

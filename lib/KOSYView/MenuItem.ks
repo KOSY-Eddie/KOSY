@@ -7,56 +7,67 @@ function MenuItem {
     self:protected("selected", false).
     local standardCursor is "> ".
     local submenuCursor is "v ".
-    self:protected("onSelect", { }).
+    local submenuExpanded is false.
+    self:protected("action", { }).
     local currentCursor is standardCursor.
     self:protected("originalText", "").
-    local submenu is null.  
-    local submenuContainer is null.
+    local submenu is null.
     
     self:protected("textLabel", TextView():new).
     self:addChild(self:textLabel).
     
-    self:protected("updateLabelText", {
-        parameter textIn.
-        if self:selected {
-            self:textLabel:setText(currentCursor + textIn).
+    self:protected("determineCursor", {
+        parameter textIn is self:originalText.
+        local showCursor is self:selected and (not isNull(self:parent) and self:parent:getInputStatus()).
+
+
+        if showCursor {
+            if subMenuExpanded
+                self:textLabel:setText(submenuCursor + textIn).
+            else
+                self:textLabel:setText(currentCursor + textIn).
         } else {
-            self:textLabel:setText(" ":padRight(standardCursor:length) + textIn).
+            self:textLabel:setText("":padRight(standardCursor:length) + textIn).
         }
+    
+
+        // if self:originalText:contains("Task"){
+        //     clearscreen.
+        //     print self:getText().
+        //     print "selected: " +self:selected.
+        //     print "not parentIsNull: " + not isNull(self:parent).
+        //     print "parentInput: " + (choose "parent is null" if isNull(self:parent) else self:parent:getInputStatus()).
+        //     wait 1.
+        // }
     }).
 
-    // In MenuItem, add type checking
-    self:public("addSubmenu", {
-        parameter menuItemIn.
-        if menuItemIn:getClassName() <> "MenuList" {
-            //print "Error: Submenu must be a MenuList".
-            return.
-        }
-        set submenu to menuItemIn.
-        
-        // Set up back navigation
-        submenu:setBackCallback({
-            self:triggerSelect().
-            self:removeChild(submenuContainer).
-            self:parent:setFocus(true).
+    local super_draw is self:draw.
+    self:public("draw",{
+        parameter boundsIn.
+        self:determineCursor().
+        super_draw(boundsIn).
+    }).
+    local super_addChild is self:addChild.
+    self:public("addChild",{
+        parameter childIn.
+        set submenu to childIn.
+        set self:action to {
+            super_addChild(submenu).
+            submenu:setInput(true).
+            self:drawAll().
+        }.
+        childIn:setBackCallBack({
+            set currentCursor to standardCursor.
+            self:parent:setInput(true).
+            self:removeChild(submenu).
             self:drawAll().
         }).
-        
-        // Create horizontal container for indentation
-        set submenuContainer to HContainerView():new.
-        local spacer is TextView():new.
-        spacer:setText("  ").
-        spacer:expandx:set(false).
-        
-        submenuContainer:addChild(spacer).
-        submenuContainer:addChild(submenu).
     }).
 
 
-
-    self:public("setOnSelect", {
+    self:public("setAction", {
         parameter actionIn.
-        set self:onSelect to actionIn.
+        set self:action to actionIn.
     }).
 
     self:public("getText", { 
@@ -66,33 +77,23 @@ function MenuItem {
     self:public("setText", {
         parameter textIn.
         set self:originalText to textIn.
-        self:updateLabelText(self:originalText).
+        self:determineCursor().
     }).
     
-    self:public("triggerSelect", {
+    self:public("triggerAction", {
         if not isNull(submenu) {
-            set currentCursor to choose submenuCursor if currentCursor = standardCursor else standardCursor.
-            self:updateLabelText(self:originalText).
-            
-            if currentCursor = submenuCursor {
-                self:addChild(submenuContainer).
-                submenu:setFocus(true).
-            } 
-            self:drawAll().
-        } 
-        self:onSelect().
-    }).
+            set currentCursor to  submenuCursor.
+            //self:addChild(submenu).
+            //self:drawAll().
 
-    self:public("hideCursor", {
-        //print "teehee".
-        //wait 2.
-        self:textLabel:setText(" ":padRight(standardCursor:length) + self:originalText).
+        } 
+        self:action().
     }).
     
     self:public("setSelected", {
         parameter isSelected.
         set self:selected to isSelected.
-        self:updateLabelText(self:originalText).
+        self:determineCursor().
     }).
 
     self:public("hAlign", {

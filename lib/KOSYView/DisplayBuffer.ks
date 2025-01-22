@@ -18,62 +18,21 @@ function DisplayBuffer {
 
     self:public("place", {
         parameter replacement, posX, posY.
-        
-        // Validate input parameters
-        if isNull(replacement) {
+        if validateCoords(posX, posY)
             return 1.
-        }
-        
-        if validateCoords(posX, posY) {
-            return 1.
-        }
-
-        // Protect against buffer overflow
-        local bufferIdx is xy_to_bufferIdx(posX, posY).
-        if bufferIdx >= buffer:length {
-            return 1.
-        }
 
         // Replace char(10) with a single space, views are supposed to handle newlines
         local processed is replacement:replace(char(10), " ").
-        
-        // Protect against replacement text too long
-        if bufferIdx + processed:length > buffer:length {
-            set processed to processed:substring(0, buffer:length - bufferIdx).
-        }
 
-        // Perform buffer operations with length checks
+        local bufferIdx is xy_to_bufferIdx(posX, posY).
         local initalLen is buffer:length.
         set buffer to buffer:insert(bufferIdx, processed).
-        
-        if bufferIdx + processed:length > initalLen {
+        if bufferIdx + processed:length > initalLen
             set buffer to buffer:remove(initalLen, buffer:length - initalLen).
-        } else {
+        else
             set buffer to buffer:remove(bufferIdx + processed:length, processed:length).
-        }
-        
         set dirty to true.
-        return 0.
     }).
-
-
-
-
-    local function processNewlines {
-        parameter text, startX.
-        local lines is text:split(char(10)).
-        local result is lines[0].
-        local currentX is startX + lines[0]:length.
-        
-        from { local i is 1. } until i >= lines:length step { set i to i + 1. } do {
-            local spacesToEnd is width - currentX.
-            set result to result + " ":padright(spacesToEnd) + lines[i].
-            set currentX to lines[i]:length.
-        }.
-        return result.
-    }.
-
-
 
     self:public("clearBuffer", {
         set buffer to "":padRight(buffer:length).

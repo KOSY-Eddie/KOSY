@@ -5,41 +5,6 @@
 // The junk drawer of KOSY - random useful functions that don't have a proper home.
 // Like that box of cables you keep "just in case" or those random screws
 // you're convinced will be important someday. They probably will be.
-//
-// String Utilities:
-// padString(str, length, padChar): Pads string to specified length with a specific character
-//    str: String to pad
-//    length: Desired final length
-//    padChar: Character to pad with
-//    Returns: Padded string
-//
-// Math Utilities:
-// map_range(value, in_min, in_max, out_min, out_max): 
-//    Maps value from one range to another
-//    Example: map_range(0.5, 0, 1, 0, 100) = 50
-//
-// clamp(value, min_val, max_val):
-//    Constrains value between min and max
-//
-// Navigation Utilities:
-// get_compass_heading(pointing_vec):
-//    Converts a vector to compass heading (0-360)
-//    Default uses ship's facing vector
-//
-// Runway System:
-// get_runway_params(): Returns standard KSC runway parameters
-// get_runway_vectors(): Calculates runway directional vectors
-// get_runway_heading(): Calculates ideal heading to stay centered on runway
-// print_runway_debug(): Displays runway parameters
-//
-// Function Utilities:
-// wrapWithParams(funcToWrap): 
-//    Collects parameters and binds them to function
-//    Used internally for delegate parameter binding
-//
-// Notes:
-// - Runway calculations specific to KSC runway
-// - Compass headings are in degrees
 
 
 function padString {
