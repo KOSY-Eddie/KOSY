@@ -42,45 +42,9 @@ function MenuList {
 
     }).
 
-    // self:public("onLoad",{
-    //     self:setInput(true).
-    //     //self:drawAll().
-    // }).
-
-    self:public("createOptionMenu", {
-        parameter configIn.  // lex with text, options
-        if not (configIn:haskey("text") and configIn:haskey("options")) {
-            return 0.
-        }
-        
-        local menuItem is MenuItem():new.
-        menuItem:setText(configIn:text).
-        menuItem:vAlign("top").
-        menuItem:expandY:set(false).
-        
-        local submenu is MenuList():new.
-        
-        // Create all menu items first so they can be referenced
-        local optionItems is lex().
-        for option in configIn:options {
-            local optionItem is MenuItem():new.
-            optionItem:setText(option:text).
-            optionItem:hAlign("left").
-            optionItem:expandY:set(false).
-            optionItems:add(option:id, optionItem).
-        }
-        
-        // Now set up the onSelect handlers with access to all items
-        for option in configIn:options {
-            optionItems[option:id]:setOnSelect(option:onSelect(optionItems)).
-            submenu:addChild(optionItems[option:id]).
-        }
-        
-        menuItem:addSubmenu(submenu).
-        return menuItem.
-    }).
-
-    
+    self:public("getSelectedMenuItem",{
+        return self:getChildren()[selectedIndex].
+    }).    
     self:public("handleInput", {
         parameter key.
         

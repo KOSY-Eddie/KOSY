@@ -1,0 +1,13 @@
+{
+    "entries": [
+        {
+            "value": "type",
+            "$type": "kOS.Safe.Encapsulation.StringValue"
+        },
+        {
+            "value": "met",
+            "$type": "kOS.Safe.Encapsulation.StringValue"
+        }
+    ],
+    "$type": "kOS.Safe.Encapsulation.Lexicon"
+}

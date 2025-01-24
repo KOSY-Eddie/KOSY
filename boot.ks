@@ -2,15 +2,16 @@
 clearscreen.
 print "KOSY Boot Sequence Initiated...".
 print " ".
+
 // Load essential classes
 print "Loading Core Systems...".
+runOncePath("/KOSY/lib/SystemConfig").
 runOncePath("/KOSY/lib/FileWriter").
 runOncePath("/KOSY/lib/TaskScheduler").
 runOncePath("/KOSY/lib/KOSYView/DisplayBuffer").
 runOncePath("/KOSY/lib/InputHandler").
 runOncePath("/KOSY/lib/AppRegistry").
 runOncePath("/KOSY/lib/SystemEvents").
-runOncePath("/KOSY/lib/SystemConfig").
 runOncePath("/KOSY/lib/utils").
 print "Core Systems Loaded.".
 print " ".
@@ -22,7 +23,6 @@ global inputHandler is SystemInputHandler():new.
 global scheduler is TaskScheduler():new.
 global sysEvents is SystemEvents():new.
 global fwriter is FileWriter():new.
-global sysConfig is SystemConfig():new.
 global appRegistry is AppRegistryObject():new.
 
 print "Global Services Initialized.".

@@ -71,6 +71,14 @@ function get_compass_heading {
     RETURN CHOOSE result + 360 IF result < 0 ELSE result.
 }
 
+function get_pitch {
+    return 90 - vectorangle(ship:up:forevector, ship:facing:forevector).
+}
+
+function get_roll {
+    return arctan2(-vdot(ship:facing:starvector, ship:up:forevector),vdot(ship:facing:topvector, ship:up:forevector)).
+}
+
 FUNCTION get_runway_heading {
     LOCAL params TO get_runway_params().
     LOCAL runway_vecs TO get_runway_vectors().

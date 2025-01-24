@@ -159,25 +159,5 @@ function TextView {
         super_draw(boundsIn).
     }).
 
-    // Modified content size calculation
-    self:public("getContentSize", {
-        parameter isWidthDim.
-        
-        if isNull(cachedBounds) {
-            return choose 1 if isWidthDim else 1.
-        }
-        
-        local lines is wrapText(text, cachedBounds:width).
-        if isWidthDim {
-            local maxWidth is 0.
-            for line in lines {
-                set maxWidth to max(maxWidth, line:length).
-            }
-            return maxWidth.
-        } else {
-            return lines:length.
-        }
-    }).
-
     return defineObject(self).
 }

@@ -1,93 +1,128 @@
 // FlightControl/Views/FlightDisplayView.ks
+runOncePath("/KOSY/lib/KOSYView/ContainerView").
+runOncePath("/KOSY/lib/KOSYView/TextView").
+runOncePath("/KOSY/lib/KOSYView/MenuList").
+runOncePath("/KOSY/lib/KOSYView/MenuItem").
 
 function FlightDisplayView {
     local self is VContainerView():extend.
     self:setClassName("FlightDisplay").
     
-    // Hold indicators row
-    local holdContainer is HContainerView():new.
-    local spdHold is TextView():new.
-    local hdgHold is TextView():new.
-    local altHold is TextView():new.
+    // Protected members
+    self:protected("_holdContainer", HContainerView():new).
+    self:protected("_primaryContainer", HContainerView():new).
+    self:protected("_secondaryContainer", HContainerView():new).
+    self:protected("_controlsContainer", HContainerView():new).
     
-    holdContainer:addChild(spdHold).
-    holdContainer:addChild(hdgHold).
-    holdContainer:addChild(altHold).
+    // Hold indicators
+    self:protected("_spdHoldInd", TextView():new).
+    self:protected("_hdgHoldInd", TextView():new).
+    self:protected("_altHoldInd", TextView():new).
     
-    // Primary values row
-    local primaryContainer is HContainerView():new.
-    primaryContainer:name:set("Primary Values Container").
-    local speedText is TextView():new.
-    speedText:name:set("Speed Display").
-    local headingText is TextView():new.
-    headingText:name:set("Heading Display").
-    local altitudeText is TextView():new.
-    altitudeText:name:set("Altitude Display").
+    // Primary values
+    self:protected("_speedText", TextView():new).
+    self:protected("_headingText", TextView():new).
+    self:protected("_altitudeText", TextView():new).
     
-    primaryContainer:addChild(speedText).
-    primaryContainer:addChild(headingText).
-    primaryContainer:addChild(altitudeText).
+    // Secondary values
+    self:protected("_machText", TextView():new).
+    self:protected("_vsiText", TextView():new).
+    self:protected("_twrText", TextView():new).
+    self:protected("_enduranceText", TextView():new).
     
-    // Secondary values row
-    local secondaryContainer is HContainerView():new.
-    secondaryContainer:name:set("Secondary Values Container").
-    local machText is TextView():new.
-    machText:name:set("Mach Display").
-    local vsiText is TextView():new.
-    vsiText:name:set("Vertical Speed Display").
-    local twrText is TextView():new.
-    twrText:name:set("TWR Display").
-    local enduranceText is TextView():new.
-    enduranceText:name:set("Endurance Display").
+    // Menu setup
+    //self:protected("_menu_flightHolds", MenuList():new).
+    //self:_menu_flightHolds:expandY:set(false).
+    self:protected("_hdgHoldMenuElements", CreateSetIncMenu("HDG Hold")).
     
-    secondaryContainer:addChild(machText).
-    secondaryContainer:addChild(vsiText).
-    secondaryContainer:addChild(twrText).
-    secondaryContainer:addChild(enduranceText).
+    // Initialize view layout
+    local function initializeLayout {
+        // Set up hold indicators
+        self:_holdContainer:addChild(self:_spdHoldInd).
+        self:_holdContainer:addChild(self:_hdgHoldInd).
+        self:_holdContainer:addChild(self:_altHoldInd).
+        
+        // Set up primary values
+        self:_primaryContainer:addChild(self:_speedText).
+        self:_primaryContainer:addChild(self:_headingText).
+        self:_primaryContainer:addChild(self:_altitudeText).
+        
+        // Set up secondary values
+        self:_secondaryContainer:addChild(self:_machText).
+        self:_secondaryContainer:addChild(self:_vsiText).
+        self:_secondaryContainer:addChild(self:_twrText).
+        self:_secondaryContainer:addChild(self:_enduranceText).
+        
+        // Set up controls
+        self:_hdgHoldMenuElements:menu:setBackCallBack({appMenu:setInput(true).}).
+        //self:_menu_flightHolds:addChild(self:_hdgHoldMenuItems:menu).
+        self:_controlsContainer:addChild(self:_hdgHoldMenuElements:container).
+        
+        // Add all containers to main view
+        self:addChild(self:_holdContainer).
+        self:addChild(self:_primaryContainer).
+        self:addChild(self:_secondaryContainer).
+        self:addChild(self:_controlsContainer).
+    }.
     
-    // Controls container
-    local controlsContainer is HContainerView():new.
-    controlsContainer:name:set("Controls Container").
-    
-    local modeMenu is MenuList():new.
-    
-    local launchItem is MenuItem():new.
-    launchItem:setText("LAUNCH TO ORBIT").
-    
-    modeMenu:addChild(launchItem).
-    modeMenu:hAlign("left").
-    controlsContainer:addChild(modeMenu).
-    
-    // Add all containers to main view
-    self:addChild(holdContainer).
-    self:addChild(primaryContainer).
-    self:addChild(secondaryContainer).
-    self:addChild(controlsContainer).
-    
-    // Expose text elements for the model to update
+    // Expose elements for the ViewModel
     self:public("elements", lexicon(
-        "spdHold", spdHold,
-        "hdgHold", hdgHold,
-        "altHold", altHold,
-        "speedText", speedText,
-        "headingText", headingText,
-        "altitudeText", altitudeText,
-        "machText", machText,
-        "vsiText", vsiText,
-        "twrText", twrText,
-        "enduranceText", enduranceText,
-        "launchItem", launchItem,
-        "modeMenu", modeMenu,
-        "orbitLaunch", launchItem
+        "hdgHoldInd", self:_hdgHoldInd,
+        "hdgHoldMenuElements", self:_hdgHoldMenuElements,
+        "speedText", self:_speedText,
+        "headingText", self:_headingText,
+        "altitudeText", self:_altitudeText,
+        "machText", self:_machText,
+        "vsiText", self:_vsiText,
+        "twrText", self:_twrText,
+        "enduranceText", self:_enduranceText
     )).
-
-    local super_setFocus is self:setFocus.
-    self:public("setFocus",{
-        parameter focused.
-        super_setFocus(focused).
-        self:elements["modeMenu"]:setFocus(focused).
-
+    
+    // Initialize on load
+    self:public("onLoad", {
+        self:elements:hdgHoldMenuElements:menu:setInput(true).
     }).
     
+    // Initialize layout
+    initializeLayout().
+    
     return defineObject(self).
+}
+
+// Menu factory function
+function CreateSetIncMenu {
+    parameter menuName.
+    
+    // Create submenu with Set, Inc, and Toggle options
+    local menu is MenuList():new.
+    local setItem is MenuItem():new.
+    local incItem is MenuItem():new.
+    local toggleItem is MenuItem():new.
+    
+    toggleItem:setText("Toggle").
+    setItem:setText("Set 0").
+    incItem:setText("Inc 5").
+    
+    menu:addChild(toggleItem).
+    menu:addChild(incItem).
+    menu:addChild(setItem).
+    
+    // Create main menu item
+    local menuLabel is TextView():new.
+    menuLabel:setText(menuName).
+    //menuLabel:halign("left").
+    //menuLabel:valign("bottom").
+    local menuContainer is VContainerView():new.
+
+    menuContainer:addChild(menuLabel).
+    menuContainer:addChild(menu).
+    menuContainer:halign("center").
+    
+    return lexicon(
+        "menu", menu,
+        "container", menuContainer,
+        "setItem", setItem,
+        "incItem", incItem,
+        "toggleItem", toggleItem
+    ).
 }

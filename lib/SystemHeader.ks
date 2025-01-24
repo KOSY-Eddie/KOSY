@@ -90,7 +90,7 @@ function SystemHeader {
         "name", "System Clock",
         "condition", {return true.},
         "work", {
-            if sysConfig:getConfig():clock:type = "met" {
+            if sysConfig:getConfigValue("clock",lex("type", "kst")):type = "met" {
                 clockText:setText(formatMETTime(MISSIONTIME):padLeft(20)).
             } else {
                 clockText:setText(formatKerbinTime(time:seconds):padLeft(20)).

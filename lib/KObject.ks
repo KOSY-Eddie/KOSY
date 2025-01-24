@@ -72,7 +72,7 @@ function isNull{
 }
 
 function Object{
-    if sysVars:DEBUG
+    if sysConfig:getConfigValue("DEBUG", false)
         return DebugObject().
     return BaseObject().
 }

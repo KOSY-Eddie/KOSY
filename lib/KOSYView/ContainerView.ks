@@ -27,6 +27,18 @@ function ContainerView {
         return -1.
     }
 
+    self:public("vAlign",{
+        parameter valignIn.
+        for child in children:copy()
+            child:vAlign(valignIn).
+    }).
+
+    self:public("hAlign",{
+        parameter halignIn.
+        for child in children:copy()
+            child:hAlign(halignIn).
+    }).
+
     self:public("removeChild", {
         parameter child.
         

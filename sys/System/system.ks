@@ -13,7 +13,15 @@ function SystemApp {
     local self is Application():extend.
     self:setClassName("SystemApp").
     
-    local container is HContainerView():new.
+    set self:mainView to MainMenuView():new.
+
+    return defineObject(self).
+}
+
+local function MainMenuView{
+    local self is HContainerView():extend.
+    self:setClassName("MainMenu").
+
     local mainMenu is MenuList():new.
     mainMenu:expandY:set(false).
     mainMenu:setBackCallBack({
@@ -29,12 +37,12 @@ function SystemApp {
     local taskMonView is TaskMonitorView():new.
 
     taskMonView:setbackCallBack({
-        self:mainView:switchContent(mainMenu, true).
+        self:switchContent(mainMenu, true).
     }).
     
     
     item_taskMon:setAction({
-        self:mainView:switchContent(taskMonView, true). 
+        self:switchContent(taskMonView, true). 
     }).
 
     item_sysConfig:setText("System Config").
@@ -42,13 +50,11 @@ function SystemApp {
     local configView is SystemConfigView():new.
 
     configView:setBackCallBack({
-        self:mainView:switchContent(mainMenu, true).
+        self:switchContent(mainMenu, true).
     }).
 
     item_sysConfig:setAction({
-        self:mainView:switchContent(configView, true). 
-        //configView:setInput(true).
-        //configView:drawAll().
+        self:switchContent(configView, true). 
     }).
 
 
@@ -62,15 +68,14 @@ function SystemApp {
     
     
     //mainMenu:setFocus(true).
-    container:addChild(mainMenu).
-    mainMenu:setInput(true).
+    self:addChild(mainMenu).
 
-    set self:mainView to container.
+    self:public("onLoad",{mainMenu:setInput(true).}).
 
     return defineObject(self).
 }
 
-function SystemConfigView {
+local function SystemConfigView {
     local self is MenuList():extend.
     self:setClassName("SystemConfigView").
     
@@ -80,22 +85,23 @@ function SystemConfigView {
 
     local clockSettingsSubMenu is MenuList():new.
     local metItem is MenuItem():new.
-    metItem:setText(choose "MET*" if sysConfig:getConfig():clock:type = "met" else "MET").
+    local clockConfigVal is sysConfig:getConfigValue("clock",lex("type", "kst")).
+    metItem:setText(choose "MET*" if clockConfigVal = "met" else "MET").
     local kstItem is MenuItem():new.
     kstItem:setText("KST").
-    kstItem:setText(choose "KST*" if sysConfig:getConfig():clock:type = "kst" else "KST").
+    kstItem:setText(choose "KST*" if clockConfigVal = "kst" else "KST").
 
     kstItem:setAction({
-        local tmpConfig is sysConfig:getConfig().
-        set tmpConfig:clock:type to "kst".
+        local tmpConfig is sysConfig:getConfigValue("clock",lex("type", "kst")).
+        set tmpConfig:type to "kst".
         kstItem:setText("KST *").
         metItem:setText("MET").
         sysEvents:emit("configChangeRequested", tmpConfig, self:getClassName()).
     }).
 
     metItem:setAction({
-        local tmpConfig is sysConfig:getConfig().
-        set tmpConfig:clock:type to "met".
+        local tmpConfig is sysConfig:getConfigValue("clock",lex("type", "kst")).
+        set tmpConfig:type to "met".
         kstItem:setText("KST").
         metItem:setText("MET *").
         sysEvents:emit("configChangeRequested", tmpConfig, self:getClassName()).
@@ -135,7 +141,7 @@ function SystemConfigView {
     // )).
     
     self:addChild(clockSettings).
-    //self:setFocus(true).
+
     return defineObject(self).
 }
 

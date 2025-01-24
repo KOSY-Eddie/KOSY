@@ -56,10 +56,10 @@ function AppLauncher {
 
     local function launchApp {
         parameter app.
-        appContainer:clean().
-        appContainer:addChild(app:mainView:get()).
         header:setAppTitle(app:getClassName()).
-        appContainer:drawAll().
+        appContainer:switchContent(app:mainView:get()).
+        //appContainer:addChild(app:mainView:get()).
+        //appContainer:drawAll().
     }
 
     local function createAppPlaceholder {

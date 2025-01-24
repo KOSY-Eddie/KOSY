@@ -5,8 +5,8 @@ function View {
     self:setClassName("View").
     
     self:protected("hasInput", false).
-    self:protected("backcallBack", {}).
-    self:protected("nextCallBack", {}).
+    self:protected("backcallBack", null).
+    self:protected("nextCallBack", null).
     self:public("spacing", 0).
     self:public("parent", null).
     self:public("expandX", true).
@@ -19,6 +19,10 @@ function View {
     self:public("setBackCallback", {
         parameter callback.
         set self:backCallback to callback.
+    }).
+
+    self:public("hasBackCallBack",{
+        return not isNull(self:backCallBack).
     }).
 
     self:public("setNextCallback", {

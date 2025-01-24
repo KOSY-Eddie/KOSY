@@ -20,8 +20,7 @@ function MenuItem {
         parameter textIn is self:originalText.
         local showCursor is self:selected and (not isNull(self:parent) and self:parent:getInputStatus()).
 
-
-        if showCursor {
+        if showCursor or subMenuExpanded {
             if subMenuExpanded
                 self:textLabel:setText(submenuCursor + textIn).
             else
@@ -56,12 +55,15 @@ function MenuItem {
             submenu:setInput(true).
             self:drawAll().
         }.
-        childIn:setBackCallBack({
-            set currentCursor to standardCursor.
-            self:parent:setInput(true).
-            self:removeChild(submenu).
-            self:drawAll().
-        }).
+        if not childIn:hasBackCallBack() {
+            childIn:setBackCallBack({
+                set currentCursor to standardCursor.
+                set submenuExpanded to false.
+                self:parent:setInput(true).
+                self:removeChild(submenu).
+                self:drawAll().
+            }).
+        }
     }).
 
 
@@ -83,9 +85,7 @@ function MenuItem {
     self:public("triggerAction", {
         if not isNull(submenu) {
             set currentCursor to  submenuCursor.
-            //self:addChild(submenu).
-            //self:drawAll().
-
+            set submenuExpanded to true.
         } 
         self:action().
     }).

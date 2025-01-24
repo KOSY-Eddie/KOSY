@@ -80,7 +80,7 @@ function FileWriter {
         parameter configIn.
         
         self:write(lex(
-            "filePath", path(sysVars:sysConfigPath):combine("system.json"),
+            "filePath", path(sysConfig:getConfigValue("sysConfigPath","/KOSY/var/syscfg")):combine("system.json"),
             "message", configIn,
             "overwrite", true,
             "isJson", true

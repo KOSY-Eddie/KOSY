@@ -1,33 +1,46 @@
+runOncePath("/KOSY/lib/KObject").
+
 function SystemConfig{
-    set self to Object():extend.
+    set self to BaseObject():extend.
 
-    local cfg is lex().
-    local configPath is path(sysVars:sysConfigPath):combine("system.json").
-    local sysVars is lex("DEBUG", false, "sysConfigPath","/KOSY/var/syscfg","logDir","/KOSY/var/log").
+    local cfg is lex("DEBUG", false, "sysConfigPath","/KOSY/var/syscfg","logDir","/KOSY/var/log").
+    local configFn is path(cfg:sysConfigPath):combine("system.json").
 
-    if exists(configPath) {
-        set cfg to readJSON(configPath).
-    } else {
-        // Create default config
-        set cfg to lexicon(
-            "clock", lexicon(
-                "type", "kst"  // default
-            )
-            // Future system configs go here
-        ).
-        fwriter:write(lex(
-            "filePath", configPath,
-            "isJson", true
-        )).
+    function loadCfgFromFile {
+        if exists(configFn) {
+        set cfg to readJSON(configFn).
+        } else {
+            // Create default config
+            set cfg to lexicon(
+                "clock", lexicon(
+                    "type", "kst"  // default
+                )
+                // Future system configs go here
+            ).
+            fwriter:write(lex(
+                "filePath", configFn,
+                "isJson", true
+            )).
+        }
     }
 
-    self:public("getConfig",{
-        return cfg.
+    self:public("getConfigValue",{
+        parameter configKeyIn, defaultValIn.
+
+        if cfg:hasKey(configKeyIn)
+            return cfg[configKeyIn].
+
+        set cfg[configKeyIn] to defaultValIn.
+        return defaultValIn.
     }).
+
 
     self:public("changeConfig",{
         parameter newConfigIn.
-        set cfg to newConfigIn:copy().
+        set localCfg to newConfigIn:copy().
+        for key in localCfg
+            set cfg[key] to localCfg[key].
+
         sysEvents:emit("systemConfigChanged", systemConfig,"System").
         //commented out file write because KOS keeps throwing permission denied errors due to my NAS
         // fwriter:write(lex(
@@ -38,5 +51,8 @@ function SystemConfig{
         // )).
     }).
 
+    loadCfgFromFile().
     return defineObject(self).
 }
+
+global sysConfig is SystemConfig():new.

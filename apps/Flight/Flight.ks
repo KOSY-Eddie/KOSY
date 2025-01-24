@@ -1,19 +1,20 @@
-runOncePath("FlightDisplayView").
+// FlightControl/FlightControlApp.ks
 runOncePath("FlightModel").
+runOncePath("FlightViewModel").
+runOncePath("FlightDisplayView").
 
-function FlightApp {
+function FlightControlApp {
     local self is Application():extend.
-    self:setClassName("Flight").
+    self:setClassName("FlightControlApp").
     
-    local appView is FlightDisplayView():new.
     local model is FlightModel():new.
+    local viewModel is FlightViewModel():new.
+    set self:mainView to FlightDisplayView():new.
     
-    model:setView(appView).
-    set self:mainView to appView.
-
-    //appView:setfocus(true).
+    viewModel:setModel(model).
+    viewModel:setView(self:mainView).
     
     return defineObject(self).
 }
 
-appRegistry:register("Flight", FlightApp@).
+appRegistry:register("Flight", FlightControlApp@).
